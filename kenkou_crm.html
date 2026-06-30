@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>健向はうす｜顧客管理</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --teal: #3AAFA9; --teal-dark: #2B8F8A; --teal-light: #E8F7F6;
+    --bg: #F5F7F7; --white: #FFFFFF; --text: #1A2E2E; --text-sub: #5A7070;
+    --border: #D4E4E3; --red: #E05555; --red-light: #FFF0F0;
+    --gold: #B8860B; --gold-light: #FFFDE7; --green: #2E7D6E;
+    --shadow: 0 2px 12px rgba(58,175,169,0.10);
+  }
+  body { font-family:-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; }
+  .header { background:var(--teal); color:white; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+  .header-title { font-size:17px; font-weight:600; }
+  .header-sub { font-size:11px; opacity:0.85; margin-top:2px; }
+  .tabs { display:flex; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:58px; z-index:99; }
+  .tab { flex:1; padding:14px 4px; text-align:center; font-size:13px; color:var(--text-sub); cursor:pointer; border:none; border-bottom:2px solid transparent; font-weight:500; background:transparent; -webkit-tap-highlight-color:rgba(0,0,0,0); font-family:inherit; touch-action:manipulation; }
+  .tab.active { color:var(--teal); border-bottom-color:var(--teal); }
+  .screen { display:none; padding:16px; max-width:600px; margin:0 auto; padding-bottom:80px; }
+  .screen.active { display:block; }
+  .search-box { background:var(--white); border:1.5px solid var(--border); border-radius:12px; padding:10px 14px; width:100%; font-size:15px; color:var(--text); margin-bottom:14px; outline:none; }
+  .search-box:focus { border-color:var(--teal); }
+  .customer-card { background:var(--white); border-radius:14px; padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; gap:12px; touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0); }
+  .avatar { width:44px; height:44px; border-radius:50%; background:var(--teal-light); color:var(--teal-dark); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex-shrink:0; }
+  .avatar.vip { background:var(--gold-light); color:var(--gold); }
+  .customer-info { flex:1; min-width:0; }
+  .customer-name { font-size:16px; font-weight:600; }
+  .customer-meta { font-size:12px; color:var(--text-sub); margin-top:3px; }
+  .badge { font-size:10px; padding:2px 8px; border-radius:99px; font-weight:600; flex-shrink:0; }
+  .badge-vip { background:var(--gold-light); color:var(--gold); }
+  .badge-general { background:var(--teal-light); color:var(--teal-dark); }
+  .btn { padding:12px 20px; border-radius:12px; border:none; font-size:15px; font-weight:600; cursor:pointer; width:100%; margin-bottom:10px; }
+  .btn-primary { background:var(--teal); color:white; }
+  .btn-danger { background:var(--red-light); color:var(--red); }
+  .btn-secondary { background:var(--teal-light); color:var(--teal-dark); }
+  .form-label { font-size:12px; font-weight:600; color:var(--text-sub); letter-spacing:0.05em; margin-bottom:6px; display:block; margin-top:12px; }
+  .form-input { background:var(--white); border:1.5px solid var(--border); border-radius:10px; padding:11px 14px; width:100%; font-size:15px; color:var(--text); outline:none; }
+  .form-input:focus { border-color:var(--teal); }
+  select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235A7070' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+  textarea.form-input { min-height:70px; resize:vertical; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; margin-top:16px; }
+  .section-title { font-size:14px; font-weight:700; }
+  .section-action { font-size:13px; color:var(--teal); font-weight:600; cursor:pointer; background:none; border:none; padding:4px 8px; }
+  .detail-card { background:var(--white); border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .detail-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-key { color:var(--text-sub); }
+  .detail-val { font-weight:500; text-align:right; max-width:60%; }
+  .vip-counter { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+  .counter-card { background:var(--white); border-radius:12px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); }
+  .counter-num { font-size:26px; font-weight:700; color:var(--teal); }
+  .counter-label { font-size:11px; color:var(--text-sub); margin-top:2px; }
+  .history-item { background:var(--white); border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); }
+  .history-date { font-size:12px; color:var(--text-sub); margin-bottom:4px; }
+  .history-menu { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .tag { font-size:11px; padding:2px 8px; border-radius:99px; }
+  .tag-cupping { background:#FFF0E6; color:#B85C00; }
+  .tag-ems { background:#E6F0FF; color:#0050B8; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:flex-end; justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--white); border-radius:20px 20px 0 0; padding:20px 16px 32px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:99px; margin:0 auto 16px; }
+  .modal-title { font-size:17px; font-weight:700; margin-bottom:4px; }
+  .checkbox-item { display:flex; align-items:center; gap:10px; background:var(--bg); border-radius:10px; padding:10px 12px; cursor:pointer; margin-bottom:8px; }
+  .checkbox-item input[type="checkbox"] { width:18px; height:18px; accent-color:var(--teal); }
+  .checkbox-item label { font-size:14px; cursor:pointer; }
+  .empty-state { text-align:center; padding:48px 16px; color:var(--text-sub); }
+  .empty-icon { font-size:48px; margin-bottom:12px; }
+  .fab { position:fixed; bottom:24px; right:20px; width:56px; height:56px; background:var(--teal); color:white; border-radius:50%; border:none; font-size:28px; cursor:pointer; box-shadow:0 4px 16px rgba(58,175,169,0.4); display:flex; align-items:center; justify-content:center; z-index:150; }
+  .back-btn { display:flex; align-items:center; gap:6px; color:var(--teal); font-size:15px; font-weight:600; cursor:pointer; background:none; border:none; margin-bottom:16px; padding:0; }
+  .summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
+  .summary-card { background:var(--white); border-radius:12px; padding:14px 10px; text-align:center; box-shadow:var(--shadow); }
+  .summary-num { font-size:18px; font-weight:700; }
+  .summary-label { font-size:11px; color:var(--text-sub); margin-top:3px; }
+  .income-item { background:var(--white); border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); display:flex; justify-content:space-between; align-items:center; }
+  .income-left { flex:1; }
+  .income-date { font-size:12px; color:var(--text-sub); }
+  .income-name { font-size:14px; font-weight:600; margin:2px 0; }
+  .income-menu { font-size:12px; color:var(--text-sub); }
+  .income-amount { font-size:16px; font-weight:700; color:var(--green); }
+  .month-selector { display:flex; align-items:center; gap:10px; margin-bottom:16px; background:var(--white); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow); }
+  .month-btn { background:var(--teal-light); color:var(--teal-dark); border:none; border-radius:8px; padding:6px 12px; font-size:14px; font-weight:600; cursor:pointer; }
+  .month-label { flex:1; text-align:center; font-weight:700; font-size:15px; }
+  .plan-card { background:var(--white); border-radius:14px; padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:space-between; }
+  .plan-info { flex:1; }
+  .plan-name { font-size:16px; font-weight:600; }
+  .plan-meta { font-size:12px; color:var(--text-sub); margin-top:3px; }
+  .plan-price { font-size:16px; font-weight:700; color:var(--green); }
+  .delete-btn { background:var(--red-light); color:var(--red); border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; margin-left:10px; }
+  .menu-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .menu-tag { font-size:10px; padding:2px 8px; border-radius:99px; background:var(--teal-light); color:var(--teal-dark); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">健向はうす</div>
+    <div class="header-sub">顧客管理システム</div>
+  </div>
+  <div id="customer-count" style="font-size:13px;opacity:0.85;"></div>
+</div>
+
+<div class="tabs" id="main-tabs">
+  <button class="tab active" id="tab-list" onclick="showTab('list',this)" ontouchend="showTab('list',this);event.preventDefault();">顧客</button>
+  <button class="tab" id="tab-vip" onclick="showTab('vip',this)" ontouchend="showTab('vip',this);event.preventDefault();">VIP</button>
+  <button class="tab" id="tab-income" onclick="showTab('income',this)" ontouchend="showTab('income',this);event.preventDefault();">売上</button>
+  <button class="tab" id="tab-plans" onclick="showTab('plans',this)" ontouchend="showTab('plans',this);event.preventDefault();">プラン</button>
+  <button class="tab" id="tab-today" onclick="showTab('today',this)" ontouchend="showTab('today',this);event.preventDefault();">本日</button>
+</div>
+
+<!-- 顧客一覧 -->
+<div class="screen active" id="screen-list">
+  <input class="search-box" type="search" placeholder="🔍 名前・ふりがなで検索" oninput="searchCustomers(this.value)">
+  <div id="customer-list"></div>
+</div>
+
+<!-- VIP -->
+<div class="screen" id="screen-vip">
+  <div id="vip-list"></div>
+</div>
+
+<!-- 売上 -->
+<div class="screen" id="screen-income">
+  <div class="month-selector">
+    <button class="month-btn" onclick="changeMonth(-1)">◀</button>
+    <div class="month-label" id="month-label"></div>
+    <button class="month-btn" onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-card"><div class="summary-num" id="s-days" style="color:var(--teal)">0</div><div class="summary-label">施術日数</div></div>
+    <div class="summary-card"><div class="summary-num" id="s-count" style="color:var(--teal)">0</div><div class="summary-label">来客数</div></div>
+    <div class="summary-card"><div class="summary-num" id="s-total" style="color:var(--green)">¥0</div><div class="summary-label">月売上</div></div>
+  </div>
+  <div class="section-header">
+    <div class="section-title">売上明細</div>
+    <button class="section-action" onclick="openAddIncome()">＋ 追加</button>
+  </div>
+  <div id="income-list"></div>
+</div>
+
+<!-- VIPプラン管理 -->
+<div class="screen" id="screen-plans">
+  <div class="section-header">
+    <div class="section-title">VIPプラン一覧</div>
+    <button class="section-action" onclick="openAddPlan()">＋ 新規プラン</button>
+  </div>
+  <div id="plan-list"></div>
+</div>
+
+<!-- 本日 -->
+<div class="screen" id="screen-today">
+  <div style="font-size:20px;font-weight:700;margin-bottom:16px;">本日の施術</div>
+  <div id="today-list"></div>
+  <div class="empty-state" id="today-empty"><div class="empty-icon">📋</div><div>本日の記録はありません</div></div>
+</div>
+
+<!-- 顧客詳細 -->
+<div class="screen" id="screen-detail">
+  <button class="back-btn" onclick="goBack()">← 戻る</button>
+  <div id="detail-content"></div>
+</div>
+
+<button class="fab" id="fab-btn" onclick="onFab()">＋</button>
+
+<!-- 顧客追加モーダル -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新規顧客登録</div>
+    <label class="form-label">氏名</label>
+    <input class="form-input" id="add-name" placeholder="例：田中 花子">
+    <label class="form-label">ふりがな</label>
+    <input class="form-input" id="add-kana" placeholder="例：たなか はなこ">
+    <label class="form-label">電話番号</label>
+    <input class="form-input" id="add-phone" placeholder="090-XXXX-XXXX" type="tel">
+    <label class="form-label">会員種別</label>
+    <select class="form-input" id="add-type" onchange="toggleVipPlan()">
+      <option value="general">一般会員</option>
+      <option value="vip">VIP会員</option>
+    </select>
+    <div id="vip-plan-select" style="display:none">
+      <label class="form-label">VIPプラン</label>
+      <select class="form-input" id="add-plan"></select>
+    </div>
+    <label class="form-label">禁忌・メモ</label>
+    <textarea class="form-input" id="add-allergy" placeholder="特になし"></textarea>
+    <button class="btn btn-primary" onclick="addCustomer()" style="margin-top:16px;">登録する</button>
+    <button class="btn btn-danger" onclick="closeModal('modal-add')">キャンセル</button>
+  </div>
+</div>
+
+<!-- 施術記録モーダル -->
+<div class="modal-overlay" id="modal-session">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">施術記録を追加</div>
+    <label class="form-label">日付</label>
+    <input class="form-input" id="session-date" type="date">
+    <label class="form-label">メニュー</label>
+    <select class="form-input" id="session-menu">
+      <option value="整体30分">整体30分 - 3,500円</option>
+      <option value="整体40分">整体40分 - 4,600円</option>
+      <option value="整体50分">整体50分 - 5,700円</option>
+      <option value="整体60分" selected>整体60分 - 6,800円</option>
+      <option value="整体90分">整体90分 - 10,100円</option>
+      <option value="整体120分">整体120分 - 13,400円</option>
+      <option value="エステ（シートパック）">エステ（シートパック）- 6,600円</option>
+      <option value="エステ（クレイパック）">エステ（クレイパック）- 8,800円</option>
+      <option value="ボディケア70分">ボディケア70分 - 11,000円</option>
+      <option value="カッピング単体">カッピング単体 - 2,200円</option>
+    </select>
+    <label class="form-label">使用した施術</label>
+    <div class="checkbox-item"><input type="checkbox" id="use-cupping"><label for="use-cupping">カッピング使用</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="use-ems"><label for="use-ems">EMS使用</label></div>
+    <label class="form-label">金額（円）</label>
+    <input class="form-input" id="session-amount" type="number" placeholder="6800">
+    <label class="form-label">担当者メモ</label>
+    <textarea class="form-input" id="session-memo" placeholder="施術内容・気になる点など"></textarea>
+    <button class="btn btn-primary" onclick="addSession()" style="margin-top:16px;">記録する</button>
+    <button class="btn btn-danger" onclick="closeModal('modal-session')">キャンセル</button>
+  </div>
+</div>
+
+<!-- 売上追加モーダル -->
+<div class="modal-overlay" id="modal-income">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">売上を追加</div>
+    <label class="form-label">日付</label>
+    <input class="form-input" id="income-date" type="date">
+    <label class="form-label">顧客名</label>
+    <input class="form-input" id="income-name" placeholder="氏名または「一般」">
+    <label class="form-label">メニュー</label>
+    <select class="form-input" id="income-menu">
+      <option value="整体30分">整体30分</option>
+      <option value="整体40分">整体40分</option>
+      <option value="整体50分">整体50分</option>
+      <option value="整体60分" selected>整体60分</option>
+      <option value="整体90分">整体90分</option>
+      <option value="整体120分">整体120分</option>
+      <option value="エステ（シートパック）">エステ（シートパック）</option>
+      <option value="エステ（クレイパック）">エステ（クレイパック）</option>
+      <option value="ボディケア70分">ボディケア70分</option>
+      <option value="カッピング単体">カッピング単体</option>
+      <option value="VIPサブスク">VIPサブスク</option>
+      <option value="その他">その他</option>
+    </select>
+    <label class="form-label">金額（円）</label>
+    <input class="form-input" id="income-amount" type="number" placeholder="6800">
+    <button class="btn btn-primary" onclick="addIncome()" style="margin-top:16px;">追加する</button>
+    <button class="btn btn-danger" onclick="closeModal('modal-income')">キャンセル</button>
+  </div>
+</div>
+
+<!-- VIPプラン追加モーダル -->
+<div class="modal-overlay" id="modal-plan">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">VIPプランを作成</div>
+    <label class="form-label">プラン名</label>
+    <input class="form-input" id="plan-name" placeholder="例：整体スタンダード">
+    <label class="form-label">月の回数</label>
+    <select class="form-input" id="plan-quota">
+      <option value="2">月2回</option>
+      <option value="4" selected>月4回</option>
+      <option value="6">月6回</option>
+      <option value="8">月8回</option>
+      <option value="12">月12回（週3回）</option>
+    </select>
+    <label class="form-label">使えるメニュー</label>
+    <div class="checkbox-item"><input type="checkbox" id="plan-seitai" checked><label for="plan-seitai">整体</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="plan-este"><label for="plan-este">エステ</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="plan-training"><label for="plan-training">パーソナルトレーニング</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="plan-cupping"><label for="plan-cupping">カッピング単体</label></div>
+    <label class="form-label">月額料金（円）</label>
+    <input class="form-input" id="plan-price" type="number" placeholder="14800">
+    <label class="form-label">メモ・特典</label>
+    <textarea class="form-input" id="plan-memo" placeholder="例：化粧品10%オフ・振替可・繰越1回まで"></textarea>
+    <button class="btn btn-primary" onclick="addPlan()" style="margin-top:16px;">作成する</button>
+    <button class="btn btn-danger" onclick="closeModal('modal-plan')">キャンセル</button>
+  </div>
+</div>
+
+<!-- VIP更新モーダル -->
+<div class="modal-overlay" id="modal-vip">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">VIP会員 月次更新</div>
+    <label class="form-label">月</label>
+    <input class="form-input" id="vip-month" type="month">
+    <label class="form-label">使用済み回数</label>
+    <select class="form-input" id="vip-used">
+      <option value="0">0回</option><option value="1">1回</option>
+      <option value="2">2回</option><option value="3">3回</option>
+      <option value="4">4回</option><option value="5">5回</option>
+      <option value="6">6回</option><option value="7">7回</option>
+      <option value="8">8回</option>
+    </select>
+    <label class="form-label">繰越回数</label>
+    <select class="form-input" id="vip-carry">
+      <option value="0">0回</option><option value="1">1回</option><option value="2">2回</option>
+    </select>
+    <button class="btn btn-primary" onclick="updateVip()" style="margin-top:16px;">更新する</button>
+    <button class="btn btn-danger" onclick="closeModal('modal-vip')">キャンセル</button>
+  </div>
+</div>
+
+<script>
+const DAYS = ['日','月','火','水','木','金','土'];
+let customers = JSON.parse(localStorage.getItem('kh_customers2') || '[]');
+let incomes = JSON.parse(localStorage.getItem('kh_incomes2') || '[]');
+let plans = JSON.parse(localStorage.getItem('kh_plans') || '[]');
+let currentCustomerId = null;
+let currentTab = 'list';
+let prevTab = 'list';
+let currentMonth = new Date().toISOString().slice(0,7);
+
+// デフォルトプラン
+if (plans.length === 0) {
+  plans = [{
+    id: 1, name: 'スタンダードVIP', quota: 4,
+    menus: ['整体','エステ'], price: 14800,
+    memo: '化粧品10%オフ・振替可・繰越1回まで'
+  }];
+  savePlans();
+}
+
+function save() {
+  localStorage.setItem('kh_customers2', JSON.stringify(customers));
+  localStorage.setItem('kh_incomes2', JSON.stringify(incomes));
+  updateCount();
+}
+function savePlans() { localStorage.setItem('kh_plans', JSON.stringify(plans)); }
+function updateCount() { document.getElementById('customer-count').textContent = `登録 ${customers.length}名`; }
+function getDayLabel(d) { return DAYS[new Date(d).getDay()]; }
+
+function showTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.getElementById('main-tabs').style.display = 'flex';
+  document.getElementById('fab-btn').style.display = 'flex';
+  prevTab = currentTab;
+  currentTab = tab;
+  if (tab==='list') renderList(getSorted());
+  if (tab==='vip') renderVip();
+  if (tab==='income') renderIncome();
+  if (tab==='plans') renderPlans();
+  if (tab==='today') renderToday();
+}
+
+function goBack() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + prevTab).classList.add('active');
+  document.getElementById('main-tabs').style.display = 'flex';
+  document.getElementById('fab-btn').style.display = 'flex';
+  currentTab = prevTab;
+}
+
+function showScreen(screen) {
+  prevTab = currentTab;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  if (screen==='detail') {
+    document.getElementById('main-tabs').style.display = 'none';
+    document.getElementById('fab-btn').style.display = 'none';
+  }
+}
+
+function getSorted() {
+  return [...customers.filter(c=>c.type==='vip'), ...customers.filter(c=>c.type!=='vip')];
+}
+
+function renderList(list) {
+  const el = document.getElementById('customer-list');
+  if (!list.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div><div>＋ボタンで顧客を追加</div></div>'; updateCount(); return; }
+  el.innerHTML = list.map(c => {
+    const plan = c.planId ? plans.find(p=>p.id===c.planId) : null;
+    return `<div class="customer-card" onclick="showDetail(${c.id})">
+      <div class="avatar ${c.type==='vip'?'vip':''}">${c.name?c.name[0]:'?'}</div>
+      <div class="customer-info">
+        <div class="customer-name">${c.name}</div>
+        <div class="customer-meta">${c.kana||''} ／ 来店 ${c.sessions?c.sessions.length:0}回${plan?' ／ '+plan.name:''}</div>
+      </div>
+      <span class="badge ${c.type==='vip'?'badge-vip':'badge-general'}">${c.type==='vip'?'VIP':'一般'}</span>
+    </div>`;
+  }).join('');
+  updateCount();
+}
+
+function searchCustomers(q) {
+  if (!q) return renderList(getSorted());
+  renderList(customers.filter(c => c.name.includes(q)||(c.kana||'').includes(q)));
+}
+
+function renderVip() {
+  const vips = customers.filter(c=>c.type==='vip');
+  const el = document.getElementById('vip-list');
+  if (!vips.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">⭐</div><div>VIP会員がいません</div></div>'; return; }
+  el.innerHTML = vips.map(c => {
+    const plan = c.planId ? plans.find(p=>p.id===c.planId) : null;
+    const quota = plan ? plan.quota : 4;
+    const v = c.vip || {used:0, carry:0};
+    const remaining = quota + (v.carry||0) - v.used;
+    return `<div class="detail-card" onclick="showDetail(${c.id})" style="cursor:pointer">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="avatar vip">${c.name[0]}</div>
+        <div>
+          <div style="font-weight:700;font-size:16px;">${c.name}</div>
+          <div style="font-size:12px;color:var(--text-sub);">${plan?plan.name:'VIP会員'} ／ 月${quota}回</div>
+        </div>
+      </div>
+      <div class="vip-counter">
+        <div class="counter-card"><div class="counter-num">${quota}</div><div class="counter-label">月の枠</div></div>
+        <div class="counter-card"><div class="counter-num" style="color:var(--red)">${v.used}</div><div class="counter-label">使用済み</div></div>
+        <div class="counter-card"><div class="counter-num" style="color:var(--green)">${remaining}</div><div class="counter-label">残り</div></div>
+        <div class="counter-card"><div class="counter-num" style="color:var(--gold)">${v.carry||0}</div><div class="counter-label">繰越</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPlans() {
+  const el = document.getElementById('plan-list');
+  if (!plans.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div>＋ボタンでプランを作成</div></div>'; return; }
+  el.innerHTML = plans.map(p => {
+    const memberCount = customers.filter(c=>c.planId===p.id).length;
+    return `<div class="plan-card">
+      <div class="plan-info">
+        <div class="plan-name">${p.name}</div>
+        <div class="plan-meta">月${p.quota}回 ／ 会員${memberCount}名</div>
+        <div class="menu-tags">${p.menus.map(m=>`<span class="menu-tag">${m}</span>`).join('')}</div>
+        ${p.memo?`<div style="font-size:11px;color:var(--text-sub);margin-top:4px;">${p.memo}</div>`:''}
+      </div>
+      <div style="text-align:right;">
+        <div class="plan-price">¥${p.price.toLocaleString()}</div>
+        <button class="delete-btn" onclick="deletePlan(${p.id},event)">削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderIncome() {
+  const [y,m] = currentMonth.split('-').map(Number);
+  document.getElementById('month-label').textContent = `${y}年${m}月`;
+  const mi = incomes.filter(i=>i.date.startsWith(currentMonth)).sort((a,b)=>b.date.localeCompare(a.date));
+  const total = mi.reduce((s,i)=>s+(i.amount||0),0);
+  document.getElementById('s-days').textContent = new Set(mi.map(i=>i.date)).size;
+  document.getElementById('s-count').textContent = mi.length;
+  document.getElementById('s-total').textContent = '¥'+total.toLocaleString();
+  const el = document.getElementById('income-list');
+  if (!mi.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">💰</div><div>この月の記録はありません</div></div>'; return; }
+  el.innerHTML = mi.map(i=>`<div class="income-item">
+    <div class="income-left">
+      <div class="income-date">${i.date}（${getDayLabel(i.date)}）</div>
+      <div class="income-name">${i.customerName}</div>
+      <div class="income-menu">${i.menu}</div>
+    </div>
+    <div class="income-amount">¥${(i.amount||0).toLocaleString()}</div>
+  </div>`).join('');
+}
+
+function changeMonth(dir) {
+  const [y,m] = currentMonth.split('-').map(Number);
+  const d = new Date(y, m-1+dir, 1);
+  currentMonth = d.toISOString().slice(0,7);
+  renderIncome();
+}
+
+function renderToday() {
+  const today = new Date().toISOString().slice(0,10);
+  const items = [];
+  customers.forEach(c => { if(c.sessions) c.sessions.filter(s=>s.date===today).forEach(s=>items.push({c,s})); });
+  const el = document.getElementById('today-list');
+  const empty = document.getElementById('today-empty');
+  if (!items.length) { el.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  el.innerHTML = items.map(({c,s})=>`<div class="history-item" onclick="showDetail(${c.id})">
+    <div class="history-date">${c.name}</div>
+    <div class="history-menu">${s.menu}</div>
+    <div style="display:flex;gap:5px;margin:4px 0;">
+      ${s.cupping?'<span class="tag tag-cupping">カッピング</span>':''}
+      ${s.ems?'<span class="tag tag-ems">EMS</span>':''}
+    </div>
+    ${s.amount?`<div style="font-size:13px;font-weight:600;color:var(--green)">¥${s.amount.toLocaleString()}</div>`:''}
+    ${s.memo?`<div style="font-size:12px;color:var(--text-sub)">${s.memo}</div>`:''}
+  </div>`).join('');
+}
+
+function showDetail(id) {
+  currentCustomerId = id;
+  const c = customers.find(x=>x.id===id);
+  if (!c) return;
+  showScreen('detail');
+  const plan = c.planId ? plans.find(p=>p.id===c.planId) : null;
+  const quota = plan ? plan.quota : 4;
+  const v = c.vip || {used:0, carry:0};
+  const remaining = quota + (v.carry||0) - v.used;
+  document.getElementById('detail-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div class="avatar ${c.type==='vip'?'vip':''}" style="width:56px;height:56px;font-size:20px;">${c.name[0]}</div>
+      <div>
+        <div style="font-size:22px;font-weight:700;">${c.name}</div>
+        <div style="font-size:13px;color:var(--text-sub);">${c.kana||''}</div>
+        <span class="badge ${c.type==='vip'?'badge-vip':'badge-general'}" style="margin-top:4px;display:inline-block;">${c.type==='vip'?'VIP会員':'一般会員'}</span>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-row"><span class="detail-key">電話番号</span><span class="detail-val">${c.phone||'未登録'}</span></div>
+      <div class="detail-row"><span class="detail-key">入会日</span><span class="detail-val">${c.joinDate}</span></div>
+      <div class="detail-row"><span class="detail-key">来店回数</span><span class="detail-val">${c.sessions?c.sessions.length:0}回</span></div>
+      ${plan?`<div class="detail-row"><span class="detail-key">VIPプラン</span><span class="detail-val">${plan.name}</span></div>`:''}
+      ${c.allergy?`<div class="detail-row"><span class="detail-key">禁忌事項</span><span class="detail-val">${c.allergy}</span></div>`:''}
+    </div>
+    ${c.type==='vip'?`
+    <div class="section-header">
+      <div class="section-title">⭐ VIP会員状況</div>
+      <button class="section-action" onclick="openVipUpdate()">更新</button>
+    </div>
+    <div class="vip-counter" style="margin-bottom:16px;">
+      <div class="counter-card"><div class="counter-num">${quota}</div><div class="counter-label">月の枠</div></div>
+      <div class="counter-card"><div class="counter-num" style="color:var(--red)">${v.used}</div><div class="counter-label">使用済み</div></div>
+      <div class="counter-card"><div class="counter-num" style="color:var(--green)">${remaining}</div><div class="counter-label">残り</div></div>
+      <div class="counter-card"><div class="counter-num" style="color:var(--gold)">${v.carry||0}</div><div class="counter-label">繰越</div></div>
+    </div>
+    ${plan&&plan.memo?`<div style="font-size:12px;color:var(--text-sub);margin-bottom:16px;background:var(--gold-light);padding:10px;border-radius:10px;">特典：${plan.memo}</div>`:''}
+    `:''}
+    <div class="section-header">
+      <div class="section-title">施術履歴</div>
+      <button class="section-action" onclick="openAddSession()">＋ 追加</button>
+    </div>
+    ${c.sessions&&c.sessions.length?
+      c.sessions.sort((a,b)=>b.date.localeCompare(a.date)).map(s=>`
+        <div class="history-item">
+          <div class="history-date">${s.date}（${getDayLabel(s.date)}）</div>
+          <div class="history-menu">${s.menu}</div>
+          <div style="display:flex;gap:5px;margin:4px 0;">
+            ${s.cupping?'<span class="tag tag-cupping">カッピング</span>':''}
+            ${s.ems?'<span class="tag tag-ems">EMS</span>':''}
+          </div>
+          ${s.amount?`<div style="font-size:13px;font-weight:600;color:var(--green)">¥${s.amount.toLocaleString()}</div>`:''}
+          ${s.memo?`<div style="font-size:12px;color:var(--text-sub)">${s.memo}</div>`:''}
+        </div>`).join('')
+      :'<div class="empty-state" style="padding:24px;"><div>施術履歴がありません</div></div>'}
+  `;
+}
+
+function onFab() {
+  if (currentTab==='income') openAddIncome();
+  else if (currentTab==='plans') openAddPlan();
+  else openAddCustomer();
+}
+
+function toggleVipPlan() {
+  const isVip = document.getElementById('add-type').value === 'vip';
+  document.getElementById('vip-plan-select').style.display = isVip ? 'block' : 'none';
+  if (isVip) {
+    const sel = document.getElementById('add-plan');
+    sel.innerHTML = plans.map(p=>`<option value="${p.id}">${p.name}（月${p.quota}回 ¥${p.price.toLocaleString()}）</option>`).join('');
+  }
+}
+
+function openAddCustomer() {
+  ['add-name','add-kana','add-phone','add-allergy'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-type').value='general';
+  document.getElementById('vip-plan-select').style.display='none';
+  openModal('modal-add');
+}
+
+function addCustomer() {
+  const name = document.getElementById('add-name').value.trim();
+  if (!name) { alert('氏名を入力してください'); return; }
+  const type = document.getElementById('add-type').value;
+  const c = {
+    id: Date.now(), name, kana: document.getElementById('add-kana').value.trim(),
+    phone: document.getElementById('add-phone').value.trim(), type,
+    allergy: document.getElementById('add-allergy').value.trim(),
+    joinDate: new Date().toISOString().slice(0,10), sessions: []
+  };
+  if (type==='vip') {
+    c.planId = parseInt(document.getElementById('add-plan').value);
+    c.vip = {used:0, carry:0, month: new Date().toISOString().slice(0,7)};
+  }
+  customers.unshift(c);
+  save();
+  closeModal('modal-add');
+  renderList(getSorted());
+}
+
+function openAddSession() {
+  document.getElementById('session-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('session-menu').value = '整体60分';
+  document.getElementById('use-cupping').checked = false;
+  document.getElementById('use-ems').checked = false;
+  document.getElementById('session-amount').value = '';
+  document.getElementById('session-memo').value = '';
+  openModal('modal-session');
+}
+
+function addSession() {
+  const c = customers.find(x=>x.id===currentCustomerId);
+  if (!c) return;
+  const s = {
+    date: document.getElementById('session-date').value,
+    menu: document.getElementById('session-menu').value,
+    cupping: document.getElementById('use-cupping').checked,
+    ems: document.getElementById('use-ems').checked,
+    amount: parseInt(document.getElementById('session-amount').value)||0,
+    memo: document.getElementById('session-memo').value.trim()
+  };
+  if (!c.sessions) c.sessions=[];
+  c.sessions.unshift(s);
+  if (c.type==='vip'&&c.vip) c.vip.used++;
+  if (s.amount>0) incomes.unshift({id:Date.now(), date:s.date, customerName:c.name, menu:s.menu, amount:s.amount});
+  save();
+  closeModal('modal-session');
+  showDetail(currentCustomerId);
+}
+
+function openAddIncome() {
+  document.getElementById('income-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('income-name').value = '';
+  document.getElementById('income-amount').value = '';
+  openModal('modal-income');
+}
+
+function addIncome() {
+  const amount = parseInt(document.getElementById('income-amount').value);
+  if (!amount) { alert('金額を入力してください'); return; }
+  incomes.unshift({id:Date.now(), date:document.getElementById('income-date').value,
+    customerName:document.getElementById('income-name').value.trim()||'一般',
+    menu:document.getElementById('income-menu').value, amount});
+  save();
+  closeModal('modal-income');
+  renderIncome();
+}
+
+function openAddPlan() {
+  ['plan-name','plan-price','plan-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('plan-quota').value='4';
+  ['plan-seitai','plan-este','plan-training','plan-cupping'].forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById('plan-seitai').checked=true;
+  openModal('modal-plan');
+}
+
+function addPlan() {
+  const name = document.getElementById('plan-name').value.trim();
+  const price = parseInt(document.getElementById('plan-price').value);
+  if (!name||!price) { alert('プラン名と料金を入力してください'); return; }
+  const menus = [];
+  if (document.getElementById('plan-seitai').checked) menus.push('整体');
+  if (document.getElementById('plan-este').checked) menus.push('エステ');
+  if (document.getElementById('plan-training').checked) menus.push('トレーニング');
+  if (document.getElementById('plan-cupping').checked) menus.push('カッピング');
+  plans.push({id:Date.now(), name, quota:parseInt(document.getElementById('plan-quota').value),
+    menus, price, memo:document.getElementById('plan-memo').value.trim()});
+  savePlans();
+  closeModal('modal-plan');
+  renderPlans();
+}
+
+function deletePlan(id, e) {
+  e.stopPropagation();
+  if (!confirm('このプランを削除しますか？')) return;
+  plans = plans.filter(p=>p.id!==id);
+  savePlans();
+  renderPlans();
+}
+
+function openVipUpdate() {
+  const c = customers.find(x=>x.id===currentCustomerId);
+  if (!c||!c.vip) return;
+  document.getElementById('vip-month').value = c.vip.month||new Date().toISOString().slice(0,7);
+  document.getElementById('vip-used').value = c.vip.used||0;
+  document.getElementById('vip-carry').value = c.vip.carry||0;
+  openModal('modal-vip');
+}
+
+function updateVip() {
+  const c = customers.find(x=>x.id===currentCustomerId);
+  if (!c) return;
+  if (!c.vip) c.vip={};
+  c.vip.month = document.getElementById('vip-month').value;
+  c.vip.used = parseInt(document.getElementById('vip-used').value);
+  c.vip.carry = parseInt(document.getElementById('vip-carry').value);
+  save();
+  closeModal('modal-vip');
+  showDetail(currentCustomerId);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+renderList(getSorted());
+updateCount();
+renderIncome();
+
+// バックアップ
+function backupData() {
+  const data = { customers, incomes, plans, backupDate: new Date().toLocaleString('ja-JP') };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '健向はうす_バックアップ_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  alert('バックアップを保存しました！');
+}
+
+function restoreData() {
+  if (!confirm('バックアップから復元しますか？\n現在のデータは上書きされます。')) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.customers) customers = data.customers;
+        if (data.incomes) incomes = data.incomes;
+        if (data.plans) plans = data.plans;
+        save(); savePlans();
+        renderList(getSorted()); renderIncome(); renderPlans();
+        alert('復元完了！\nバックアップ日時：' + (data.backupDate||'不明'));
+      } catch(err) { alert('ファイルの読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+</script>
+
+<div style="position:fixed;bottom:24px;left:16px;display:flex;gap:8px;z-index:150;">
+  <button onclick="backupData()" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--shadow);">💾 バックアップ</button>
+  <button onclick="restoreData()" style="background:var(--gold-light);color:var(--gold);border:none;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--shadow);">📂 復元</button>
+</div>
+
+</body>
+</html>
