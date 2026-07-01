@@ -308,7 +308,67 @@
     <button class="btn btn-primary" onclick="updateVip()" style="margin-top:16px;">更新する</button>
     <button class="btn btn-danger" onclick="closeModal('modal-vip')">キャンセル</button>
   </div>
+
+<!-- 顧客編集モーダル -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">顧客情報を編集</div>
+    <label class="form-label">氏名</label>
+    <input class="form-input" id="edit-name" placeholder="例：田中 花子">
+    <label class="form-label">ふりがな</label>
+    <input class="form-input" id="edit-kana" placeholder="例：たなか はなこ">
+    <label class="form-label">電話番号</label>
+    <input class="form-input" id="edit-phone" placeholder="090-XXXX-XXXX" type="tel">
+    <label class="form-label">会員種別</label>
+    <select class="form-input" id="edit-type" onchange="toggleEditVipPlan()">
+      <option value="general">一般会員</option>
+      <option value="vip">VIP会員</option>
+    </select>
+    <div id="edit-vip-plan-select" style="display:none">
+      <label class="form-label">VIPプラン</label>
+      <select class="form-input" id="edit-plan"></select>
+    </div>
+    <label class="form-label">禁忌・メモ</label>
+    <textarea class="form-input" id="edit-allergy" placeholder="特になし"></textarea>
+    <button class="btn btn-primary" onclick="saveEditCustomer()" style="margin-top:16px;">保存する</button>
+    <button class="btn btn-danger" onclick="deleteCustomer()">この顧客を削除する</button>
+    <button class="btn btn-secondary" onclick="closeModal('modal-edit')">キャンセル</button>
+  </div>
 </div>
+
+<!-- 売上編集モーダル -->
+<div class="modal-overlay" id="modal-edit-income">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">売上を編集</div>
+    <label class="form-label">日付</label>
+    <input class="form-input" id="edit-income-date" type="date">
+    <label class="form-label">顧客名</label>
+    <input class="form-input" id="edit-income-name">
+    <label class="form-label">メニュー</label>
+    <select class="form-input" id="edit-income-menu">
+      <option value="整体30分">整体30分</option>
+      <option value="整体40分">整体40分</option>
+      <option value="整体50分">整体50分</option>
+      <option value="整体60分">整体60分</option>
+      <option value="整体90分">整体90分</option>
+      <option value="整体120分">整体120分</option>
+      <option value="エステ（シートパック）">エステ（シートパック）</option>
+      <option value="エステ（クレイパック）">エステ（クレイパック）</option>
+      <option value="ボディケア70分">ボディケア70分</option>
+      <option value="カッピング単体">カッピング単体</option>
+      <option value="VIPサブスク">VIPサブスク</option>
+      <option value="その他">その他</option>
+    </select>
+    <label class="form-label">金額（円）</label>
+    <input class="form-input" id="edit-income-amount" type="number">
+    <button class="btn btn-primary" onclick="saveEditIncome()" style="margin-top:16px;">保存する</button>
+    <button class="btn btn-danger" onclick="deleteIncome()">この売上を削除する</button>
+    <button class="btn btn-secondary" onclick="closeModal('modal-edit-income')">キャンセル</button>
+  </div>
+</div>
+
 
 <script>
 const DAYS = ['日','月','火','水','木','金','土'];
@@ -462,7 +522,10 @@ function renderIncome() {
       <div class="income-name">${i.customerName}</div>
       <div class="income-menu">${i.menu}</div>
     </div>
-    <div class="income-amount">¥${(i.amount||0).toLocaleString()}</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+      <div class="income-amount">¥${(i.amount||0).toLocaleString()}</div>
+      <button onclick="openEditIncome(${i.id})" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;touch-action:manipulation;">編集</button>
+    </div>
   </div>`).join('');
 }
 
@@ -536,9 +599,12 @@ function showDetail(id) {
       <button class="section-action" onclick="openAddSession()">＋ 追加</button>
     </div>
     ${c.sessions&&c.sessions.length?
-      c.sessions.sort((a,b)=>b.date.localeCompare(a.date)).map(s=>`
+      c.sessions.sort((a,b)=>b.date.localeCompare(a.date)).map((s,idx)=>`
         <div class="history-item">
-          <div class="history-date">${s.date}（${getDayLabel(s.date)}）</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="history-date">${s.date}（${getDayLabel(s.date)}）</div>
+            <button onclick="deleteSession(${idx})" style="background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;touch-action:manipulation;">削除</button>
+          </div>
           <div class="history-menu">${s.menu}</div>
           <div style="display:flex;gap:5px;margin:4px 0;">
             ${s.cupping?'<span class="tag tag-cupping">カッピング</span>':''}
@@ -692,6 +758,118 @@ function updateVip() {
   save();
   closeModal('modal-vip');
   showDetail(currentCustomerId);
+}
+
+
+// 顧客編集
+let editIncomeId = null;
+
+function openEditCustomer() {
+  const c = customers.find(x => x.id === currentCustomerId);
+  if (!c) return;
+  document.getElementById('edit-name').value = c.name || '';
+  document.getElementById('edit-kana').value = c.kana || '';
+  document.getElementById('edit-phone').value = c.phone || '';
+  document.getElementById('edit-type').value = c.type || 'general';
+  document.getElementById('edit-allergy').value = c.allergy || '';
+  
+  const isVip = c.type === 'vip';
+  document.getElementById('edit-vip-plan-select').style.display = isVip ? 'block' : 'none';
+  if (isVip) {
+    const sel = document.getElementById('edit-plan');
+    sel.innerHTML = plans.map(p => `<option value="${p.id}" ${c.planId===p.id?'selected':''}>${p.name}（月${p.quota}回 ¥${p.price.toLocaleString()}）</option>`).join('');
+  }
+  openModal('modal-edit');
+}
+
+function toggleEditVipPlan() {
+  const isVip = document.getElementById('edit-type').value === 'vip';
+  document.getElementById('edit-vip-plan-select').style.display = isVip ? 'block' : 'none';
+  if (isVip) {
+    const sel = document.getElementById('edit-plan');
+    sel.innerHTML = plans.map(p => `<option value="${p.id}">${p.name}（月${p.quota}回 ¥${p.price.toLocaleString()}）</option>`).join('');
+  }
+}
+
+function saveEditCustomer() {
+  const c = customers.find(x => x.id === currentCustomerId);
+  if (!c) return;
+  const newType = document.getElementById('edit-type').value;
+  c.name = document.getElementById('edit-name').value.trim();
+  c.kana = document.getElementById('edit-kana').value.trim();
+  c.phone = document.getElementById('edit-phone').value.trim();
+  c.allergy = document.getElementById('edit-allergy').value.trim();
+  
+  if (newType === 'vip' && c.type !== 'vip') {
+    c.type = 'vip';
+    c.planId = parseInt(document.getElementById('edit-plan').value);
+    c.vip = {used:0, carry:0, month: new Date().toISOString().slice(0,7)};
+  } else if (newType === 'vip') {
+    c.type = 'vip';
+    c.planId = parseInt(document.getElementById('edit-plan').value);
+  } else {
+    c.type = 'general';
+    delete c.planId;
+    delete c.vip;
+  }
+  
+  save();
+  closeModal('modal-edit');
+  showDetail(currentCustomerId);
+}
+
+function deleteCustomer() {
+  const c = customers.find(x => x.id === currentCustomerId);
+  if (!c) return;
+  if (!confirm(`「${c.name}」を削除しますか？\n施術履歴も全て削除されます。`)) return;
+  customers = customers.filter(x => x.id !== currentCustomerId);
+  save();
+  closeModal('modal-edit');
+  goBack();
+  renderList(getSorted());
+}
+
+// 施術履歴削除
+function deleteSession(index) {
+  const c = customers.find(x => x.id === currentCustomerId);
+  if (!c || !c.sessions) return;
+  if (!confirm('この施術記録を削除しますか？')) return;
+  c.sessions.splice(index, 1);
+  if (c.type === 'vip' && c.vip && c.vip.used > 0) c.vip.used--;
+  save();
+  showDetail(currentCustomerId);
+}
+
+// 売上編集
+function openEditIncome(id) {
+  editIncomeId = id;
+  const i = incomes.find(x => x.id === id);
+  if (!i) return;
+  document.getElementById('edit-income-date').value = i.date;
+  document.getElementById('edit-income-name').value = i.customerName;
+  document.getElementById('edit-income-menu').value = i.menu;
+  document.getElementById('edit-income-amount').value = i.amount;
+  openModal('modal-edit-income');
+}
+
+function saveEditIncome() {
+  const i = incomes.find(x => x.id === editIncomeId);
+  if (!i) return;
+  i.date = document.getElementById('edit-income-date').value;
+  i.customerName = document.getElementById('edit-income-name').value.trim();
+  i.menu = document.getElementById('edit-income-menu').value;
+  i.amount = parseInt(document.getElementById('edit-income-amount').value) || 0;
+  save();
+  closeModal('modal-edit-income');
+  renderIncome();
+}
+
+function deleteIncome() {
+  if (!confirm('この売上記録を削除しますか？')) return;
+  incomes = incomes.filter(x => x.id !== editIncomeId);
+  save();
+  closeModal('modal-edit-income');
+  renderIncome();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('active'); }
