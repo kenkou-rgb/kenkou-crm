@@ -117,6 +117,10 @@
 <div class="screen active" id="screen-list">
   <input class="search-box" type="search" placeholder="🔍 名前・ふりがなで検索" oninput="searchCustomers(this.value)">
   <div id="customer-list"></div>
+<div style="display:flex;gap:8px;margin-top:24px;padding-bottom:16px;">
+  <button onclick="backupData()" style="flex:1;background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">💾 バックアップ</button>
+  <button onclick="restoreData()" style="flex:1;background:var(--gold-light);color:var(--gold);border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">📂 復元</button>
+</div>
 </div>
 
 <!-- VIP -->
@@ -918,10 +922,7 @@ function restoreData() {
 }
 </script>
 
-<div style="position:fixed;bottom:24px;left:16px;display:flex;gap:8px;z-index:150;">
-  <button onclick="backupData()" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--shadow);">💾 バックアップ</button>
-  <button onclick="restoreData()" style="background:var(--gold-light);color:var(--gold);border:none;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--shadow);">📂 復元</button>
-</div>
+<!-- バックアップボタンは各画面の下部に表示 -->
 
 </body>
 </html>
