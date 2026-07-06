@@ -612,13 +612,16 @@ function showDetail(id) {
   const v = c.vip || {used:0, carry:0};
   const remaining = quota + (v.carry||0) - v.used;
   document.getElementById('detail-content').innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-      <div class="avatar ${c.type==='vip'?'vip':''}" style="width:56px;height:56px;font-size:20px;">${c.name[0]}</div>
-      <div>
-        <div style="font-size:22px;font-weight:700;">${c.name}</div>
-        <div style="font-size:13px;color:var(--text-sub);">${c.kana||''}</div>
-        <span class="badge ${c.type==='vip'?'badge-vip':'badge-general'}" style="margin-top:4px;display:inline-block;">${c.type==='vip'?'VIP会員':'一般会員'}</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="avatar ${c.type==='vip'?'vip':''}" style="width:56px;height:56px;font-size:20px;">${c.name[0]}</div>
+        <div>
+          <div style="font-size:22px;font-weight:700;">${c.name}</div>
+          <div style="font-size:13px;color:var(--text-sub);">${c.kana||''}</div>
+          <span class="badge ${c.type==='vip'?'badge-vip':'badge-general'}" style="margin-top:4px;display:inline-block;">${c.type==='vip'?'VIP会員':'一般会員'}</span>
+        </div>
       </div>
+      <button onclick="openEditCustomer()" ontouchend="openEditCustomer();event.preventDefault();" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;white-space:nowrap;">✏️ 編集</button>
     </div>
     <div class="detail-card">
       <div class="detail-row"><span class="detail-key">電話番号</span><span class="detail-val">${c.phone||'未登録'}</span></div>
