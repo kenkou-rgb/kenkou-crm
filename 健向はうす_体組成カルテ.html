@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>健向はうす｜体組成カルテ＆食事目安アシスタント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFEAE0;
+    --card:#FFFFFF;
+    --ink:#2B2A26;
+    --ink-soft:#6B6659;
+    --line:#DED7C6;
+    --sage:#556349;
+    --sage-deep:#3D4834;
+    --sage-pale:#E4E8DD;
+    --clay:#A9622F;
+    --clay-pale:#F3E3D4;
+    --brick:#954C3F;
+    --brick-pale:#F5E2DE;
+    --teal:#3E6B5C;
+    --teal-pale:#DEEAE4;
+    --gold:#B08D3E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans JP',sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);padding-bottom:90px;}
+  header.top{
+    background:var(--sage-deep);
+    color:#F3F1E8;
+    padding:22px 20px 20px;
+    position:sticky;top:0;z-index:40;
+    box-shadow:0 4px 14px rgba(0,0,0,0.12);
+  }
+  header.top .eyebrow{
+    font-size:10px;letter-spacing:.14em;color:#C9D2BC;font-weight:700;text-transform:uppercase;
+  }
+  header.top h1{
+    font-family:'Shippori Mincho',serif;
+    font-weight:700;
+    font-size:19px;
+    margin:4px 0 2px;
+    letter-spacing:.02em;
+  }
+  header.top p{margin:0;font-size:11px;color:#D9D9C9;line-height:1.5;}
+
+  main{padding:16px;display:flex;flex-direction:column;gap:14px;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+  }
+  .card h2{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.06em;
+    color:var(--sage-deep);
+    margin:0 0 12px;
+    display:flex;align-items:center;gap:6px;
+    text-transform:uppercase;
+  }
+  .card h2 .num{
+    background:var(--sage);
+    color:#fff;
+    width:18px;height:18px;border-radius:5px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:10px;font-family:'Zen Kaku Gothic New',sans-serif;
+  }
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+
+  .field label{
+    display:block;font-size:10.5px;color:var(--ink-soft);margin-bottom:4px;font-weight:700;
+  }
+  .field .unit-wrap{position:relative;}
+  .field input, .field select{
+    width:100%;
+    border:1px solid var(--line);
+    background:#FBFAF6;
+    border-radius:9px;
+    padding:9px 30px 9px 10px;
+    font-size:14px;
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-weight:700;
+    color:var(--ink);
+    text-align:right;
+  }
+  .field select{text-align:left;padding-right:10px;}
+  .field .unit{
+    position:absolute;right:9px;top:50%;transform:translateY(-50%);
+    font-size:10px;color:var(--ink-soft);font-weight:700;
+  }
+  .field input:focus, .field select:focus{outline:2px solid var(--sage);outline-offset:0;}
+
+  .toggle2{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#EDE9DC;padding:3px;border-radius:9px;}
+  .toggle2 button{
+    border:none;background:transparent;padding:8px 0;border-radius:7px;font-size:12px;font-weight:700;color:var(--ink-soft);
+  }
+  .toggle2 button.active{background:#fff;color:var(--sage-deep);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+
+  .note{font-size:10.5px;color:var(--ink-soft);line-height:1.6;margin-top:8px;}
+
+  /* 判定バッジ */
+  .metric-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 0;border-bottom:1px solid var(--line);
+  }
+  .metric-row:last-child{border-bottom:none;}
+  .metric-row .m-name{font-size:12px;font-weight:700;color:var(--ink);}
+  .metric-row .m-value{font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;font-weight:900;color:var(--sage-deep);margin-left:6px;}
+  .badge{
+    font-size:10px;font-weight:900;padding:3px 9px;border-radius:999px;white-space:nowrap;
+  }
+  .badge.low{background:var(--clay-pale);color:var(--clay);}
+  .badge.mid{background:var(--teal-pale);color:var(--teal);}
+  .badge.high{background:var(--brick-pale);color:var(--brick);}
+  .badge.flat{background:var(--sage-pale);color:var(--sage-deep);}
+
+  /* ゲージ(内臓脂肪・体脂肪率など用シグネチャー要素) */
+  .gauge{margin-top:6px;}
+  .gauge .track{
+    position:relative;height:8px;border-radius:6px;
+    background:linear-gradient(90deg,var(--teal-pale) 0 40%, var(--clay-pale) 40% 70%, var(--brick-pale) 70% 100%);
+    overflow:visible;
+  }
+  .gauge .dot{
+    position:absolute;top:50%;width:14px;height:14px;border-radius:50%;
+    background:var(--sage-deep);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);
+    transform:translate(-50%,-50%);
+  }
+  .gauge .labels{display:flex;justify-content:space-between;font-size:9px;color:var(--ink-soft);margin-top:5px;}
+
+  /* カロリーカード */
+  .kcal-hero{
+    background:linear-gradient(135deg,var(--sage-deep),#2E3826);
+    color:#F4F1E7;
+    border-radius:16px;padding:18px;
+  }
+  .kcal-hero .label{font-size:10.5px;color:#C9D2BC;font-weight:700;letter-spacing:.05em;}
+  .kcal-hero .range{
+    font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;
+    font-size:26px;margin:4px 0 2px;
+  }
+  .kcal-hero .range small{font-size:13px;font-weight:700;}
+  .kcal-hero .sub{font-size:10.5px;color:#D9D9C9;line-height:1.6;margin-top:8px;}
+  .kcal-hero .floor-alert{
+    margin-top:10px;background:rgba(149,76,63,.28);border:1px solid rgba(149,76,63,.6);
+    padding:8px 10px;border-radius:9px;font-size:11px;color:#F6DCD6;line-height:1.6;
+  }
+
+  .pfc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;}
+  .pfc-box{background:rgba(255,255,255,.08);border-radius:10px;padding:9px;text-align:center;}
+  .pfc-box .k{font-size:9.5px;color:#C9D2BC;font-weight:700;}
+  .pfc-box .v{font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;font-weight:900;margin-top:2px;}
+
+  /* オリジナルアドバイス */
+  .advice-card{background:var(--clay-pale);border:1px solid #E4CBAE;border-radius:14px;padding:16px;}
+  .advice-card h2{color:var(--clay);}
+  .advice-card .txt{font-size:12.5px;line-height:1.85;color:#4A3826;white-space:pre-wrap;}
+  .advice-card .service-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .stag{font-size:10px;font-weight:900;background:#fff;border:1px solid #E4CBAE;color:var(--clay);padding:4px 9px;border-radius:999px;}
+
+  .disclaimer{
+    font-size:10px;line-height:1.7;color:var(--ink-soft);background:#E9E4D6;border-radius:10px;padding:11px 12px;
+  }
+
+  .btn{
+    width:100%;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:900;
+    font-family:'Noto Sans JP',sans-serif;letter-spacing:.02em;
+  }
+  .btn.primary{background:var(--sage-deep);color:#fff;}
+  .btn.ghost{background:#fff;color:var(--sage-deep);border:1.5px solid var(--sage-deep);}
+  .btn.danger{background:#fff;color:var(--brick);border:1.5px solid var(--brick);}
+
+  nav.bottom{
+    position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;
+    background:var(--sage-deep);display:flex;justify-content:space-around;padding:10px 6px;z-index:50;
+    box-shadow:0 -4px 14px rgba(0,0,0,.18);
+  }
+  nav.bottom button{background:none;border:none;color:#B9C2AC;font-size:10.5px;font-weight:700;padding:4px 8px;}
+  nav.bottom button.active{color:#fff;}
+
+  .tab{display:none;flex-direction:column;gap:14px;}
+  .tab.active{display:flex;}
+
+  .hist-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px;}
+  .hist-item .top-row{display:flex;justify-content:space-between;align-items:flex-start;}
+  .hist-item h4{margin:2px 0 0;font-size:13px;font-weight:900;}
+  .hist-item .meta{font-size:10px;color:var(--ink-soft);}
+  .hist-item .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#FBFAF6;border-radius:8px;padding:8px;margin-top:8px;font-size:11px;}
+  .hist-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;}
+  .hist-actions button{font-size:10px;font-weight:900;border:none;background:none;padding:4px 6px;}
+  .hist-actions .load{color:var(--sage-deep);}
+  .hist-actions .del{color:var(--brick);}
+
+  .toast{
+    position:fixed;top:16px;left:50%;transform:translateX(-50%);
+    background:var(--sage-deep);color:#fff;font-size:12px;font-weight:700;
+    padding:10px 16px;border-radius:11px;box-shadow:0 6px 18px rgba(0,0,0,.25);
+    opacity:0;pointer-events:none;transition:opacity .3s;z-index:100;
+  }
+  .toast.show{opacity:1;}
+
+  .modal-back{
+    position:fixed;inset:0;background:rgba(20,20,15,.55);display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:90;opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  .modal-back.show{opacity:1;pointer-events:auto;}
+  .modal-box{background:#fff;border-radius:16px;padding:20px;max-width:320px;width:100%;text-align:center;}
+  .modal-box h3{font-size:15px;margin:8px 0 4px;}
+  .modal-box p{font-size:11.5px;color:var(--ink-soft);line-height:1.6;}
+  .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+
+  @media print{
+    nav.bottom,.no-print{display:none !important;}
+    body{background:#fff;}
+    .wrap{max-width:100%;padding-bottom:0;}
+    .card,.advice-card{border:1px solid #ccc !important;box-shadow:none !important;}
+    .kcal-hero{background:#2E3826 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top no-print">
+    <div class="eyebrow">健向はうす｜岡崎</div>
+    <h1>体組成カルテ＆食事目安アシスタント</h1>
+    <p>「痛くなってから行く」をやめませんか。体組成計の数値から、今の体の状態と食事の目安を確認しましょう。</p>
+  </header>
+
+  <div class="hidden-print" style="display:none;" id="print-header-slot"></div>
+
+  <main>
+    <!-- ===================== TAB: CALC ===================== -->
+    <div id="tab-calc" class="tab active">
+
+      <div class="card">
+        <h2><span class="num">1</span>お客様情報</h2>
+        <div class="grid2">
+          <div class="field">
+            <label>お名前</label>
+            <input type="text" id="client_name" placeholder="山田 花子" style="text-align:left;">
+          </div>
+          <div class="field">
+            <label>測定日</label>
+            <input type="date" id="measure_date" style="text-align:left;">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">2</span>基本情報</h2>
+        <div class="grid3" style="margin-bottom:10px;">
+          <div class="field">
+            <label>性別</label>
+            <div class="toggle2">
+              <button type="button" id="btn-g-f" class="active" onclick="setGender('女')">女性</button>
+              <button type="button" id="btn-g-m" onclick="setGender('男')">男性</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>年齢</label>
+            <div class="unit-wrap"><input type="number" id="age" value="45" oninput="calc()"><span class="unit">歳</span></div>
+          </div>
+          <div class="field">
+            <label>身長</label>
+            <div class="unit-wrap"><input type="number" id="height" value="155" oninput="calc()"><span class="unit">cm</span></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>活動量の目安</label>
+          <select id="activity" onchange="calc()" style="text-align:left;">
+            <option value="1.2">ほぼ座り仕事・運動なし</option>
+            <option value="1.375" selected>軽い運動や家事中心(週1〜3回)</option>
+            <option value="1.55">中程度の運動(週3〜5回)</option>
+            <option value="1.725">よく運動する(週6〜7回)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">3</span>体組成計の数値</h2>
+        <p class="note" style="margin-top:-4px;margin-bottom:10px;">お手元の体組成計の結果をそのまま入力してください。空欄の項目は計算・表示をスキップします。</p>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>体重</label><div class="unit-wrap"><input type="number" step="0.1" id="weight" value="58.0" oninput="calc()"><span class="unit">kg</span></div></div>
+          <div class="field"><label>体脂肪率</label><div class="unit-wrap"><input type="number" step="0.1" id="fat_pct" value="30.0" oninput="calc()"><span class="unit">%</span></div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>筋肉量</label><div class="unit-wrap"><input type="number" step="0.1" id="muscle_mass" oninput="calc()"><span class="unit">kg</span></div></div>
+          <div class="field"><label>骨格筋量</label><div class="unit-wrap"><input type="number" step="0.1" id="skm" oninput="calc()"><span class="unit">kg</span></div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>基礎代謝(表示値)</label><div class="unit-wrap"><input type="number" id="bmr_device" placeholder="空欄で自動計算" oninput="calc()"><span class="unit">kcal</span></div></div>
+          <div class="field"><label>体水分量</label><div class="unit-wrap"><input type="number" step="0.1" id="water_pct" oninput="calc()"><span class="unit">%</span></div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>体脂肪量</label><div class="unit-wrap"><input type="number" step="0.1" id="fat_mass" placeholder="空欄で自動計算" oninput="calc()"><span class="unit">kg</span></div></div>
+          <div class="field"><label>骨量</label><div class="unit-wrap"><input type="number" step="0.1" id="bone_mass" oninput="calc()"><span class="unit">kg</span></div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px;">
+          <div class="field"><label>内臓脂肪レベル</label><div class="unit-wrap"><input type="number" id="visceral" oninput="calc()"><span class="unit">Lv</span></div></div>
+          <div class="field"><label>タンパク質量</label><div class="unit-wrap"><input type="number" step="0.1" id="protein_mass" oninput="calc()"><span class="unit">kg</span></div></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>皮下脂肪率</label><div class="unit-wrap"><input type="number" step="0.1" id="subfat_pct" oninput="calc()"><span class="unit">%</span></div></div>
+          <div class="field"><label>体内年齢</label><div class="unit-wrap"><input type="number" id="body_age" oninput="calc()"><span class="unit">歳</span></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">4</span>ご希望の方向性</h2>
+        <select id="goal" onchange="calc()" style="width:100%;text-align:left;">
+          <option value="lose">体重・体脂肪を減らしたい</option>
+          <option value="maintain">今の体重をキープしたい</option>
+          <option value="gain">体重を増やしたい</option>
+        </select>
+      </div>
+
+      <!-- 判定結果 -->
+      <div class="card">
+        <h2><span class="num">5</span>今の体の状態(目安)</h2>
+        <div id="metric-rows"></div>
+        <p class="note">※一般に公表されている目安との比較であり、医学的な診断ではありません。体組成計のメーカーにより算出方法が異なるため、経時的な変化(前回との比較)を重視してご覧ください。</p>
+      </div>
+
+      <!-- カロリー計算 -->
+      <div class="kcal-hero">
+        <div class="label">1日の食事目安カロリー</div>
+        <div class="range" id="kcal_range">-- <small>kcal</small></div>
+        <div class="sub" id="kcal_sub">体組成データを入力すると表示されます。</div>
+        <div class="floor-alert no-print" id="floor_alert" style="display:none;"></div>
+        <div class="pfc-grid">
+          <div class="pfc-box"><div class="k">たんぱく質</div><div class="v" id="pfc_p">--</div></div>
+          <div class="pfc-box"><div class="k">脂質</div><div class="v" id="pfc_f">--</div></div>
+          <div class="pfc-box"><div class="k">炭水化物</div><div class="v" id="pfc_c">--</div></div>
+        </div>
+      </div>
+
+      <!-- サロンオリジナルアドバイス -->
+      <div class="advice-card">
+        <h2><span class="num" style="background:var(--clay);">💡</span>健向はうすからのご提案</h2>
+        <div class="txt" id="advice_text">項目を入力すると、状態に合わせたご提案を表示します。</div>
+        <div class="service-tags" id="advice_tags"></div>
+      </div>
+
+      <div class="disclaimer">
+        本アプリの数値・カロリー目安は、一般的な計算式(Mifflin-St Jeor式)および公表されている参考範囲に基づく目安であり、医学的診断や個別の栄養指導に代わるものではありません。持病のある方、大幅な減量・増量をお考えの方、体調に不安のある方は、医師または管理栄養士にご相談のうえお進めください。
+      </div>
+
+      <div class="no-print" style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn primary" onclick="doPrint()">🖨️ カルテを印刷 / PDF保存</button>
+        <button class="btn ghost" onclick="saveHistory()">💾 顧客カルテとして保存</button>
+      </div>
+    </div>
+
+    <!-- ===================== TAB: HISTORY ===================== -->
+    <div id="tab-hist" class="tab">
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 style="margin:0;"><span class="num">📂</span>保存済みカルテ</h2>
+        <button class="btn danger" style="width:auto;padding:8px 12px;font-size:10.5px;" onclick="askClearAll()">全消去</button>
+      </div>
+      <div class="card no-print">
+        <h2><span class="num">☁️</span>iCloudでのバックアップ</h2>
+        <p class="note" style="margin-top:-4px;">このアプリはiPad内のブラウザにのみデータを保存しています。他の端末と共有したい場合は、以下の書き出し/読み込みでiCloud Drive経由のバックアップ・復元ができます。</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+          <button class="btn ghost" onclick="exportBackup()">⬆️ バックアップを書き出す(iCloud Driveに保存可)</button>
+          <label class="btn ghost" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            ⬇️ バックアップを読み込む
+            <input type="file" accept="application/json" onchange="importBackup(event)" style="display:none;">
+          </label>
+        </div>
+      </div>
+      <div id="hist-list"></div>
+    </div>
+
+  </main>
+
+  <nav class="bottom no-print">
+    <button id="nav-calc" class="active" onclick="switchTab('calc')">📊 計算・アドバイス</button>
+    <button id="nav-hist" onclick="switchTab('hist')">📂 保存カルテ</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-back" id="modal-back">
+  <div class="modal-box">
+    <div style="font-size:26px;">⚠️</div>
+    <h3>全てのカルテを削除しますか?</h3>
+    <p>保存された顧客カルテがすべて削除され、元に戻せません。</p>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn danger" onclick="confirmClearAll()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let gender = '女';
+
+function setGender(g){
+  gender = g;
+  document.getElementById('btn-g-f').classList.toggle('active', g==='女');
+  document.getElementById('btn-g-m').classList.toggle('active', g==='男');
+  calc();
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('nav-calc').classList.toggle('active', id==='calc');
+  document.getElementById('nav-hist').classList.toggle('active', id==='hist');
+  if(id==='hist') renderHistory();
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function num(id){
+  const v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) ? null : v;
+}
+
+function badge(status){
+  // status: 'low' | 'mid' | 'high' | 'flat'
+  const map = {low:'低め', mid:'標準', high:'高め', flat:'目安なし'};
+  return `<span class="badge ${status}">${map[status]}</span>`;
+}
+
+function metricRow(name, valueStr, status){
+  return `<div class="metric-row"><span class="m-name">${name}<span class="m-value">${valueStr}</span></span>${badge(status)}</div>`;
+}
+
+function bmiCategory(bmi){
+  if(bmi < 18.5) return 'low';
+  if(bmi < 25) return 'mid';
+  return 'high';
+}
+
+function fatPctCategory(pct, g){
+  if(g === '女'){
+    if(pct < 21) return 'low';
+    if(pct <= 34) return 'mid';
+    return 'high';
+  } else {
+    if(pct < 14) return 'low';
+    if(pct <= 24) return 'mid';
+    return 'high';
+  }
+}
+
+function visceralCategory(v){
+  if(v <= 9) return 'mid';
+  if(v <= 14) return 'low'; // "やや高い" を仮にlowカラー(clay)で表現
+  return 'high';
+}
+
+function calc(){
+  const weight = num('weight');
+  const height = num('height');
+  const age = num('age');
+  const activity = parseFloat(document.getElementById('activity').value);
+  const fatPct = num('fat_pct');
+  const goal = document.getElementById('goal').value;
+  const bmrDevice = num('bmr_device');
+  const visceral = num('visceral');
+  const bodyAge = num('body_age');
+
+  if(!weight || !height || !age){
+    return;
+  }
+
+  // --- BMI ---
+  const bmi = weight / Math.pow(height/100, 2);
+
+  // --- BMR: 実測値があれば優先、なければ Mifflin-St Jeor 式 ---
+  let bmr;
+  if(bmrDevice){
+    bmr = bmrDevice;
+  } else {
+    bmr = gender === '女'
+      ? (10*weight + 6.25*height - 5*age - 161)
+      : (10*weight + 6.25*height - 5*age + 5);
+  }
+  bmr = Math.round(bmr);
+
+  const tdee = Math.round(bmr * activity);
+
+  // --- 目標カロリーレンジ ---
+  const floorKcal = gender === '女' ? 1200 : 1500;
+  let low, high, subText, floorMsg = '';
+
+  if(goal === 'lose'){
+    low = Math.round(tdee * 0.80);
+    high = Math.round(tdee * 0.90);
+    if(low < floorKcal){
+      floorMsg = `計算上の下限が${floorKcal}kcalの安全ラインを下回りました。それ以上の制限は代謝や体調に影響するおそれがあるため、下限を${floorKcal}kcalに設定しています。さらに絞りたい場合は医師・管理栄養士にご相談ください。`;
+      low = floorKcal;
+      if(high < low) high = low + 100;
+    }
+    subText = `現在の推定消費カロリー(TDEE)は約${tdee}kcal。無理のない範囲として、そこから1〜2割減らした量を目安にしています。`;
+  } else if(goal === 'gain'){
+    low = Math.round(tdee * 1.10);
+    high = Math.round(tdee * 1.15);
+    subText = `現在の推定消費カロリー(TDEE)は約${tdee}kcal。体を大きくしたい場合は1〜1.5割ほど上乗せするのが一般的な目安です。`;
+  } else {
+    low = Math.round(tdee * 0.97);
+    high = Math.round(tdee * 1.03);
+    subText = `現在の推定消費カロリー(TDEE)は約${tdee}kcal。この前後を維持することで、今の体重をキープしやすくなります。`;
+  }
+
+  document.getElementById('kcal_range').innerHTML = `${low}〜${high} <small>kcal / 日</small>`;
+  document.getElementById('kcal_sub').textContent = subText;
+
+  const floorAlertEl = document.getElementById('floor_alert');
+  if(floorMsg){
+    floorAlertEl.style.display = 'block';
+    floorAlertEl.textContent = '⚠ ' + floorMsg;
+  } else {
+    floorAlertEl.style.display = 'none';
+  }
+
+  // --- PFCバランス(一般的なガイドラインレンジに基づく目安) ---
+  const midKcal = Math.round((low+high)/2);
+  const proteinG = Math.round(weight * 1.4); // 1.2-1.6g/kgの中間目安
+  const proteinKcal = proteinG * 4;
+  const fatKcal = Math.round(midKcal * 0.25); // 総カロリーの25%目安(20-30%レンジの中央)
+  const fatG = Math.round(fatKcal / 9);
+  const carbKcal = Math.max(midKcal - proteinKcal - fatKcal, 0);
+  const carbG = Math.round(carbKcal / 4);
+
+  document.getElementById('pfc_p').textContent = `${proteinG}g`;
+  document.getElementById('pfc_f').textContent = `${fatG}g`;
+  document.getElementById('pfc_c').textContent = `${carbG}g`;
+
+  // --- 指標判定リスト ---
+  let rows = '';
+  rows += metricRow('BMI', bmi.toFixed(1), bmiCategory(bmi));
+  if(fatPct !== null) rows += metricRow('体脂肪率', fatPct.toFixed(1)+'%', fatPctCategory(fatPct, gender));
+  if(visceral !== null) rows += metricRow('内臓脂肪レベル', visceral, visceralCategory(visceral));
+  if(bodyAge !== null){
+    const diff = bodyAge - age;
+    let st = 'mid';
+    if(diff >= 5) st = 'high'; else if(diff <= -5) st = 'low';
+    rows += metricRow('体内年齢', bodyAge+'歳 (実年齢比 '+(diff>=0?'+':'')+diff+')', st);
+  }
+  ['muscle_mass','筋肉量','kg','skm','骨格筋量','kg','water_pct','体水分量','%','bone_mass','骨量','kg','protein_mass','タンパク質量','kg','subfat_pct','皮下脂肪率','%'].length; // no-op guard
+
+  const refFields = [
+    ['muscle_mass','筋肉量','kg'], ['skm','骨格筋量','kg'], ['water_pct','体水分量','%'],
+    ['bone_mass','骨量','kg'], ['protein_mass','タンパク質量','kg'], ['subfat_pct','皮下脂肪率','%']
+  ];
+  refFields.forEach(([id,label,unit])=>{
+    const v = num(id);
+    if(v !== null) rows += metricRow(label, v+unit, 'flat');
+  });
+
+  document.getElementById('metric-rows').innerHTML = rows || '<p class="note">体組成データを入力すると表示されます。</p>';
+
+  buildAdvice(bmi, fatPct, visceral, bodyAge, age, goal);
+}
+
+function buildAdvice(bmi, fatPct, visceral, bodyAge, age, goal){
+  const name = document.getElementById('client_name').value || 'お客様';
+  let lines = [];
+  let tags = [];
+
+  if(bmi >= 25){
+    lines.push(`BMIはやや高めの範囲です。急激な食事制限よりも、姿勢や巡りを整えながら少しずつ生活習慣を見直すペースがおすすめです。`);
+    tags.push('頭蓋活性姿勢整体');
+  } else if(bmi < 18.5){
+    lines.push(`BMIは低めの範囲です。減量よりも、筋肉量を落とさずに体力の土台を作ることを優先すると良さそうです。`);
+    tags.push('パーソナルトレーニング');
+  } else {
+    lines.push(`BMIは標準範囲です。今のバランスを維持しながら、気になる部分を部分的にケアしていきましょう。`);
+  }
+
+  if(fatPct !== null){
+    const cat = fatPctCategory(fatPct, gender);
+    if(cat === 'high'){
+      lines.push(`体脂肪率はやや高めの傾向です。筋肉量を増やすトレーニングと合わせて、むくみや巡りのケアも並行すると変化を感じやすくなります。`);
+      tags.push('エステ・カッピング');
+    } else if(cat === 'low'){
+      lines.push(`体脂肪率はしっかり絞れている状態です。ホルモンバランスの観点からも、極端な制限は避け今の状態を維持しましょう。`);
+    }
+  }
+
+  if(visceral !== null && visceral >= 10){
+    lines.push(`内臓脂肪レベルがやや高めに出ています。姿勢の崩れが代謝の低下につながっているケースも多いため、一度姿勢のチェックをおすすめします。`);
+    if(!tags.includes('頭蓋活性姿勢整体')) tags.push('頭蓋活性姿勢整体');
+  }
+
+  if(bodyAge !== null && (bodyAge - age) >= 5){
+    lines.push(`体内年齢が実年齢より高めに出ています。筋肉量を増やすトレーニングは体内年齢の若返りに直結しやすい項目です。`);
+    if(!tags.includes('パーソナルトレーニング')) tags.push('パーソナルトレーニング');
+  }
+
+  const snackTrigger = (goal === 'lose') || bmi >= 25 || (fatPct !== null && fatPctCategory(fatPct, gender) === 'high');
+  if(snackTrigger){
+    lines.push(`食事そのものよりも、合間についつまんでしまう「間食」の積み重ねがカロリーオーバーの原因になっているケースが多く見られます。量や内容を細かく制限する必要はありませんが、まずは何をどれくらい口にしているか、1週間ほど振り返ってみるのがおすすめです。`);
+  }
+
+  lines.push(`気になる点があれば、次回のご来店時にお気軽にご相談ください。`);
+
+  document.getElementById('advice_text').textContent = lines.join('\n\n');
+  document.getElementById('advice_tags').innerHTML = tags.map(t=>`<span class="stag">${t}</span>`).join('');
+}
+
+function doPrint(){ window.print(); }
+
+function saveHistory(){
+  const weight = num('weight');
+  if(!weight){ showToast('体重を入力してください'); return; }
+
+  const data = {
+    id: Date.now(),
+    name: document.getElementById('client_name').value || '未登録',
+    measure_date: document.getElementById('measure_date').value,
+    gender, age: document.getElementById('age').value, height: document.getElementById('height').value,
+    weight, fat_pct: document.getElementById('fat_pct').value,
+    visceral: document.getElementById('visceral').value,
+    body_age: document.getElementById('body_age').value,
+    goal: document.getElementById('goal').value,
+    kcal_range: document.getElementById('kcal_range').textContent.trim(),
+    saved_at: new Date().toLocaleDateString('ja-JP')
+  };
+  let hist = JSON.parse(localStorage.getItem('kenkou_house_body_comp_v1') || '[]');
+  hist.unshift(data);
+  localStorage.setItem('kenkou_house_body_comp_v1', JSON.stringify(hist));
+  showToast('カルテを保存しました');
+}
+
+function renderHistory(){
+  const hist = JSON.parse(localStorage.getItem('kenkou_house_body_comp_v1') || '[]');
+  const el = document.getElementById('hist-list');
+  if(hist.length === 0){
+    el.innerHTML = '<div class="card" style="text-align:center;color:var(--ink-soft);font-size:12px;">保存されたカルテはまだありません。</div>';
+    return;
+  }
+  const goalLabel = {lose:'減量', maintain:'維持', gain:'増量'};
+  el.innerHTML = hist.map(h => `
+    <div class="hist-item">
+      <div class="top-row">
+        <div>
+          <h4>${h.name} 様 (${h.age}歳 / ${h.gender})</h4>
+          <span class="meta">測定日: ${h.measure_date || '未記入'} ／ 保存: ${h.saved_at}</span>
+        </div>
+        <button class="hist-actions del" onclick="deleteHist(${h.id})">削除</button>
+      </div>
+      <div class="stats">
+        <div>体重: <b>${h.weight}kg</b></div>
+        <div>体脂肪率: <b>${h.fat_pct || '--'}%</b></div>
+        <div>目的: <b>${goalLabel[h.goal] || '--'}</b></div>
+        <div>目安: <b>${h.kcal_range}</b></div>
+      </div>
+      <div class="hist-actions">
+        <button class="load" onclick="loadHist(${h.id})">カルテに復元</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadHist(id){
+  const hist = JSON.parse(localStorage.getItem('kenkou_house_body_comp_v1') || '[]');
+  const h = hist.find(x=>x.id===id);
+  if(!h) return;
+  document.getElementById('client_name').value = h.name;
+  document.getElementById('measure_date').value = h.measure_date || '';
+  setGender(h.gender);
+  document.getElementById('age').value = h.age;
+  document.getElementById('height').value = h.height;
+  document.getElementById('weight').value = h.weight;
+  document.getElementById('fat_pct').value = h.fat_pct;
+  document.getElementById('visceral').value = h.visceral;
+  document.getElementById('body_age').value = h.body_age;
+  document.getElementById('goal').value = h.goal;
+  calc();
+  switchTab('calc');
+  showToast(h.name + ' 様のカルテを復元しました');
+}
+
+function deleteHist(id){
+  let hist = JSON.parse(localStorage.getItem('kenkou_house_body_comp_v1') || '[]');
+  hist = hist.filter(x=>x.id!==id);
+  localStorage.setItem('kenkou_house_body_comp_v1', JSON.stringify(hist));
+  renderHistory();
+  showToast('削除しました');
+}
+
+function askClearAll(){
+  document.getElementById('modal-back').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modal-back').classList.remove('show');
+}
+function confirmClearAll(){
+  localStorage.removeItem('kenkou_house_body_comp_v1');
+  renderHistory();
+  closeModal();
+  showToast('全て削除しました');
+}
+
+function exportBackup(){
+  const hist = JSON.parse(localStorage.getItem('kenkou_house_body_comp_v1') || '[]');
+  if(hist.length === 0){ showToast('保存されたカルテがありません'); return; }
+  const blob = new Blob([JSON.stringify(hist, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date();
+  const ymd = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = `健向はうす_体組成バックアップ_${ymd}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('書き出しました。保存先でiCloud Driveを選べます');
+}
+
+function importBackup(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const imported = JSON.parse(e.target.result);
+      if(!Array.isArray(imported)) throw new Error('形式が不正です');
+      let hist = JSON.parse(localStorage.getItem('kenkou_house_body_comp_v1') || '[]');
+      const existingIds = new Set(hist.map(h=>h.id));
+      let addedCount = 0;
+      imported.forEach(item=>{
+        if(!existingIds.has(item.id)){
+          hist.push(item);
+          existingIds.add(item.id);
+          addedCount++;
+        }
+      });
+      hist.sort((a,b)=> b.id - a.id);
+      localStorage.setItem('kenkou_house_body_comp_v1', JSON.stringify(hist));
+      renderHistory();
+      showToast(`${addedCount}件のカルテを読み込みました`);
+    } catch(err){
+      showToast('読み込みに失敗しました。ファイルをご確認ください');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+window.onload = calc;
+</script>
+</body>
+</html>
