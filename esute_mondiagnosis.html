@@ -7,11 +7,11 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --teal: #3AAFA9; --teal-dark: #2B8F8A; --teal-light: #E8F7F6;
-    --bg: #F5F7F7; --white: #FFFFFF; --text: #1A2E2E; --text-sub: #5A7070;
-    --border: #D4E4E3; --red: #E05555; --red-light: #FFF0F0;
+    --teal: #D6607A; --teal-dark: #B84864; --teal-light: #FDECF0;
+    --bg: #F7F5F6; --white: #FFFFFF; --text: #1A2E2E; --text-sub: #5A7070;
+    --border: #F0D8DE; --red: #E05555; --red-light: #FFF0F0;
     --gold: #B8860B; --gold-light: #FFFDE7; --green: #2E7D6E;
-    --shadow: 0 2px 12px rgba(58,175,169,0.10);
+    --shadow: 0 2px 12px rgba(214,96,122,0.12);
   }
   body { font-family:-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; }
   .header { background:var(--teal); color:white; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
@@ -73,6 +73,7 @@
     <button onclick="backupData()" style="flex:1;background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">💾 バックアップ</button>
     <button onclick="restoreData()" style="flex:1;background:var(--gold-light);color:var(--gold);border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">📂 復元</button>
   </div>
+  <button onclick="location.href=&#39;kenkou_crm.html&#39;" style="width:100%;background:var(--bg);color:var(--text-sub);border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;margin-top:8px;">👤 顧客管理アプリに戻る</button>
 </div>
 
 <!-- 詳細 -->
@@ -117,6 +118,25 @@
     <div class="checkbox-item"><input type="checkbox" id="c-mukumi"><label for="c-mukumi">むくみ</label></div>
     <div class="checkbox-item"><input type="checkbox" id="c-other"><label for="c-other">その他</label></div>
   </div>
+
+  <label class="form-label">気になる部位（指またはタッチペンで書き込んでください）</label>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">正面</div>
+      <canvas id="face-front" width="180" height="220" style="width:100%;background:#fff;border:1.5px solid var(--border);border-radius:10px;touch-action:none;-webkit-tap-highlight-color:transparent;"></canvas>
+      <button type="button" onclick="clearFaceCanvas('front')" style="margin-top:6px;font-size:12px;background:var(--bg);border:none;border-radius:8px;padding:6px 10px;color:var(--text-sub);cursor:pointer;touch-action:manipulation;">クリア</button>
+    </div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">左側面</div>
+      <canvas id="face-left" width="180" height="220" style="width:100%;background:#fff;border:1.5px solid var(--border);border-radius:10px;touch-action:none;-webkit-tap-highlight-color:transparent;"></canvas>
+      <button type="button" onclick="clearFaceCanvas('left')" style="margin-top:6px;font-size:12px;background:var(--bg);border:none;border-radius:8px;padding:6px 10px;color:var(--text-sub);cursor:pointer;touch-action:manipulation;">クリア</button>
+    </div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">右側面</div>
+      <canvas id="face-right" width="180" height="220" style="width:100%;background:#fff;border:1.5px solid var(--border);border-radius:10px;touch-action:none;-webkit-tap-highlight-color:transparent;"></canvas>
+      <button type="button" onclick="clearFaceCanvas('right')" style="margin-top:6px;font-size:12px;background:var(--bg);border:none;border-radius:8px;padding:6px 10px;color:var(--text-sub);cursor:pointer;touch-action:manipulation;">クリア</button>
+    </div>
+  </div>
   <label class="form-label">その他・詳しく</label>
   <textarea class="form-input" id="f-concern-detail" placeholder="気になる部位・時期など"></textarea>
 
@@ -160,6 +180,108 @@ let records = JSON.parse(localStorage.getItem('esute_records') || '[]');
 let currentId = null;
 let editingId = null;
 let pendingCustomerId = null; // CRM側から新規作成で来た場合の紐付け先顧客ID
+
+// ---- 顔イラスト（気になる部位の書き込み） ----
+function drawFaceOutline(ctx, view) {
+  const w = ctx.canvas.width, h = ctx.canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = '#B8B8B8';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (view === 'front') {
+    // 輪郭（卵型）
+    ctx.beginPath(); ctx.ellipse(w*0.5, h*0.52, w*0.32, h*0.42, 0, 0, Math.PI*2); ctx.stroke();
+    // 耳
+    ctx.beginPath();
+    ctx.ellipse(w*0.16, h*0.52, w*0.05, h*0.08, 0, 0, Math.PI*2);
+    ctx.ellipse(w*0.84, h*0.52, w*0.05, h*0.08, 0, 0, Math.PI*2);
+    ctx.stroke();
+    // 眉
+    ctx.beginPath();
+    ctx.moveTo(w*0.32,h*0.40); ctx.lineTo(w*0.44,h*0.37);
+    ctx.moveTo(w*0.56,h*0.37); ctx.lineTo(w*0.68,h*0.40);
+    ctx.stroke();
+    // 目
+    ctx.beginPath();
+    ctx.ellipse(w*0.38,h*0.46,w*0.06,h*0.03,0,0,Math.PI*2);
+    ctx.ellipse(w*0.62,h*0.46,w*0.06,h*0.03,0,0,Math.PI*2);
+    ctx.stroke();
+    // 鼻
+    ctx.beginPath();
+    ctx.moveTo(w*0.5,h*0.48); ctx.lineTo(w*0.46,h*0.60); ctx.lineTo(w*0.54,h*0.62);
+    ctx.stroke();
+    // 口
+    ctx.beginPath();
+    ctx.moveTo(w*0.40,h*0.70); ctx.quadraticCurveTo(w*0.5,h*0.74,w*0.60,h*0.70);
+    ctx.stroke();
+  } else {
+    // 側面：'left'をベース、'right'は左右反転して描画
+    ctx.save();
+    if (view === 'right') { ctx.translate(w,0); ctx.scale(-1,1); }
+    ctx.beginPath();
+    ctx.moveTo(w*0.75, h*0.14);
+    ctx.quadraticCurveTo(w*0.92,h*0.28, w*0.86,h*0.50);
+    ctx.quadraticCurveTo(w*0.82,h*0.62, w*0.70,h*0.66);
+    ctx.lineTo(w*0.66,h*0.95);
+    ctx.lineTo(w*0.52,h*0.95);
+    ctx.quadraticCurveTo(w*0.50,h*0.80, w*0.46,h*0.72);
+    ctx.quadraticCurveTo(w*0.38,h*0.68, w*0.36,h*0.60);
+    ctx.quadraticCurveTo(w*0.28,h*0.56, w*0.26,h*0.50);
+    ctx.quadraticCurveTo(w*0.40,h*0.48, w*0.33,h*0.40);
+    ctx.quadraticCurveTo(w*0.28,h*0.28, w*0.40,h*0.20);
+    ctx.quadraticCurveTo(w*0.55,h*0.10, w*0.75,h*0.14);
+    ctx.stroke();
+    // 耳
+    ctx.beginPath();
+    ctx.ellipse(w*0.70,h*0.44,w*0.05,h*0.08,0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function setupFaceDrawing(canvas) {
+  const ctx = canvas.getContext('2d');
+  let drawing = false, last = null;
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  }
+  canvas.addEventListener('pointerdown', e => {
+    e.preventDefault(); drawing = true; last = getPos(e);
+    if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    ctx.strokeStyle = '#E05555'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    last = pos;
+  });
+  const stop = () => { drawing = false; last = null; };
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointerleave', stop);
+  canvas.addEventListener('pointercancel', stop);
+}
+
+function clearFaceCanvas(view) {
+  const canvas = document.getElementById('face-' + view);
+  drawFaceOutline(canvas.getContext('2d'), view);
+}
+
+function initFaceCanvases(frontImg, leftImg, rightImg) {
+  [['front',frontImg], ['left',leftImg], ['right',rightImg]].forEach(([view, img]) => {
+    const canvas = document.getElementById('face-' + view);
+    if (img) {
+      const image = new Image();
+      image.onload = () => canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      image.src = img;
+    } else {
+      drawFaceOutline(canvas.getContext('2d'), view);
+    }
+  });
+}
 
 // ---- CRM（顧客管理アプリ）との連携 ----
 // 同一オリジンでlocalStorageの 'kh_customers2' を共有し、顧客データを行き来させる。
@@ -291,6 +413,24 @@ function showDetail(id) {
       <div class="detail-row"><span class="detail-key">写真撮影同意</span><span class="detail-val">${r.agreePhoto?'✓ 同意済み':'未同意'}</span></div>
       ${r.staffMemo?`<div class="detail-row"><span class="detail-key">スタッフメモ</span><span class="detail-val">${r.staffMemo}</span></div>`:''}
     </div>
+    ${r.faceFrontImage?`
+    <div class="detail-card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">気になる部位</div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:11px;color:var(--text-sub);margin-bottom:4px;">正面</div>
+          <img src="${r.faceFrontImage}" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:11px;color:var(--text-sub);margin-bottom:4px;">左側面</div>
+          <img src="${r.faceLeftImage}" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:11px;color:var(--text-sub);margin-bottom:4px;">右側面</div>
+          <img src="${r.faceRightImage}" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+        </div>
+      </div>
+    </div>`:''}
     <button class="btn btn-danger" onclick="deleteRecord(${r.id})">この問診シートを削除する</button>
     ${r.customerId?`<button class="btn btn-secondary" onclick="location.href='kenkou_crm.html'">👤 顧客管理アプリに戻る</button>`:''}
   `;
@@ -310,6 +450,7 @@ function openNewForm() {
   resetForm();
   document.getElementById('form-title').textContent = '初回問診シート';
   showScreen('form');
+  initFaceCanvases(null, null, null);
 }
 
 function openEditForm(id) {
@@ -332,6 +473,7 @@ function openEditForm(id) {
   document.getElementById('agree-photo').checked = !!r.agreePhoto;
   document.getElementById('f-staffmemo').value = r.staffMemo||'';
   showScreen('form');
+  initFaceCanvases(r.faceFrontImage||null, r.faceLeftImage||null, r.faceRightImage||null);
 }
 
 function saveRecord() {
@@ -350,7 +492,10 @@ function saveRecord() {
     goal: document.getElementById('f-goal').value.trim(),
     agreeTreatment: document.getElementById('agree-treatment').checked,
     agreePhoto: document.getElementById('agree-photo').checked,
-    staffMemo: document.getElementById('f-staffmemo').value.trim()
+    staffMemo: document.getElementById('f-staffmemo').value.trim(),
+    faceFrontImage: document.getElementById('face-front').toDataURL('image/png'),
+    faceLeftImage: document.getElementById('face-left').toDataURL('image/png'),
+    faceRightImage: document.getElementById('face-right').toDataURL('image/png')
   };
   if (editingId) {
     const r = records.find(x=>x.id===editingId);
@@ -420,6 +565,9 @@ function restoreData() {
 renderList(records);
 updateCount();
 applyUrlParams();
+setupFaceDrawing(document.getElementById('face-front'));
+setupFaceDrawing(document.getElementById('face-left'));
+setupFaceDrawing(document.getElementById('face-right'));
 </script>
 </body>
 </html>
