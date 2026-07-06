@@ -379,6 +379,16 @@ const WARN_LABELS = {
   epilepsy: 'てんかん・けいれんの既往', keloid: 'ケロイド体質', skindisease: '皮膚疾患で通院中',
   sunburn: '日焼け・炎症あり', surgery: '最近の手術・注入施術'
 };
+const WARN_NOTES = {
+  pregnant: 'プラズマ・EMS・超音波機器の使用を避ける。強い刺激のトリートメントも控える',
+  pacemaker: 'EMS・電気刺激系の施術は行わない。プラズマ機器の使用は要注意',
+  metal: '金属が入っている部位への電気・超音波系施術は避ける',
+  epilepsy: '光刺激・電気刺激系（プラズマ・EMS）の施術は慎重に判断する',
+  keloid: '強い刺激・ニードリング系の施術は避け、やさしい施術を検討する',
+  skindisease: '患部への直接施術は避ける',
+  sunburn: '炎症・日焼け部位への施術は避け、鎮静を優先する',
+  surgery: '施術部位を避ける、または期間を空けて判断する'
+};
 const CONCERN_LABELS = {
   shimi:'シミ・くすみ', tarumi:'たるみ', keana:'毛穴', nikibi:'ニキビ・ニキビ跡',
   kansou:'乾燥', binkan:'敏感・赤み', mukumi:'むくみ', other:'その他'
@@ -390,7 +400,7 @@ function showDetail(id) {
   if (!r) return;
   showScreen('detail');
   const concernTags = Object.keys(r.concerns||{}).filter(k=>r.concerns[k]).map(k=>CONCERN_LABELS[k]).join('、') || 'なし';
-  const warnList = Object.keys(r.warnings||{}).filter(k=>r.warnings[k]).map(k=>WARN_LABELS[k]);
+  const warnKeys = Object.keys(r.warnings||{}).filter(k=>r.warnings[k]);
   document.getElementById('detail-content').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <div>
@@ -399,7 +409,13 @@ function showDetail(id) {
       </div>
       <button onclick="openEditForm(${r.id})" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">✏️ 編集</button>
     </div>
-    ${warnList.length?`<div class="warn-box">⚠️ 施術前に必ず確認：${warnList.join('、')}</div>`:''}
+    ${warnKeys.length?`<div class="warn-box">
+      <div style="margin-bottom:6px;">⚠️ 施術前に必ず確認</div>
+      ${warnKeys.map(k=>`<div style="font-weight:400;font-size:12px;margin-bottom:4px;padding-left:4px;border-left:2px solid var(--red);">
+        <span style="font-weight:700;">${WARN_LABELS[k]}</span>：${WARN_NOTES[k]||''}
+      </div>`).join('')}
+      <div style="font-size:11px;font-weight:400;color:var(--text-sub);margin-top:6px;">※一般的な注意点の目安です。持病がある場合は医師の判断を優先してください</div>
+    </div>`:''}
     <div class="detail-card">
       <div class="detail-row"><span class="detail-key">電話番号</span><span class="detail-val">${r.phone||'未登録'}</span></div>
       <div class="detail-row"><span class="detail-key">生年月日</span><span class="detail-val">${r.birth||'未登録'}</span></div>
