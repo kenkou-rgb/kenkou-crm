@@ -632,6 +632,7 @@ function showDetail(id) {
       ${c.allergy?`<div class="detail-row"><span class="detail-key">禁忌事項</span><span class="detail-val">${c.allergy}</span></div>`:''}
     </div>
     ${renderEsuteSection(c)}
+    ${renderSeitaiSection(c)}
     ${c.type==='vip'?`
     <div class="section-header">
       <div class="section-title">⭐ VIP会員状況</div>
@@ -703,7 +704,7 @@ function renderEsuteSection(c) {
   return `
     <div class="detail-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:13px;font-weight:700;color:var(--teal-dark);">📋 エステ問診シート</div>
+        <div style="font-size:13px;font-weight:700;color:#B84864;">📋 エステ問診シート</div>
         <button class="section-action" onclick="goToEsute(${c.id}, false, ${rec.id})">詳しく見る</button>
       </div>
       ${warnList.length?`<div class="warn-box" style="background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;margin-bottom:8px;">⚠️ ${warnList.join('、')}</div>`:''}
@@ -718,6 +719,56 @@ function goToEsute(customerId, createNew, recordId) {
     location.href = 'esute_mondiagnosis.html?' + params.toString();
   } else {
     location.href = 'esute_mondiagnosis.html?id=' + recordId;
+  }
+}
+
+// ---- 整体・トレーニング問診票との連携 ----
+const SEITAI_WARN_LABELS = {
+  pregnant: '妊娠中・妊娠の可能性', heart: '心疾患・高血圧治療中', hernia: '椎間板ヘルニア・脊柱疾患',
+  fracture: '骨折・脱臼の既往(1年以内)', surgery: '手術歴(1年以内)', numbness: 'しびれ・神経症状あり',
+  dizzy: 'めまい・立ちくらみあり', diabetes: '糖尿病治療中', inflammation: '治療中の怪我・炎症あり'
+};
+
+function getSeitaiRecords() {
+  try { return JSON.parse(localStorage.getItem('seitai_records') || '[]'); }
+  catch (e) { return []; }
+}
+
+function findSeitaiRecordForCustomer(c) {
+  const list = getSeitaiRecords();
+  return list.find(r => r.customerId === c.id) || list.find(r => r.name === c.name) || null;
+}
+
+function renderSeitaiSection(c) {
+  const rec = findSeitaiRecordForCustomer(c);
+  if (!rec) {
+    return `
+      <div class="detail-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;color:var(--text-sub);">🧘 整体・トレーニング問診票：未作成</div>
+          <button class="section-action" onclick="goToSeitai(${c.id}, true)">＋ 作成する</button>
+        </div>
+      </div>`;
+  }
+  const warnList = Object.keys(rec.warnings||{}).filter(k=>rec.warnings[k]).map(k=>SEITAI_WARN_LABELS[k]);
+  return `
+    <div class="detail-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:#9C7714;">🧘 整体・トレーニング問診票</div>
+        <button class="section-action" onclick="goToSeitai(${c.id}, false, ${rec.id})">詳しく見る</button>
+      </div>
+      ${warnList.length?`<div style="background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;margin-bottom:8px;">⚠️ ${warnList.join('、')}</div>`:''}
+      <div style="font-size:12px;color:var(--text-sub);">運動習慣：${rec.exercise||'未記入'}（記入日：${rec.date}）</div>
+    </div>`;
+}
+
+function goToSeitai(customerId, createNew, recordId) {
+  const c = customers.find(x=>x.id===customerId);
+  if (createNew) {
+    const params = new URLSearchParams({ new: '1', customerId: customerId, name: c?c.name:'', kana: c?(c.kana||''):'', phone: c?(c.phone||''):'', allergy: c?(c.allergy||''):'' });
+    location.href = 'seitai_mondiagnosis.html?' + params.toString();
+  } else {
+    location.href = 'seitai_mondiagnosis.html?id=' + recordId;
   }
 }
 
