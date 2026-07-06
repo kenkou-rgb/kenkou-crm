@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>健向はうす｜エステ問診シート</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --teal: #3AAFA9; --teal-dark: #2B8F8A; --teal-light: #E8F7F6;
+    --bg: #F5F7F7; --white: #FFFFFF; --text: #1A2E2E; --text-sub: #5A7070;
+    --border: #D4E4E3; --red: #E05555; --red-light: #FFF0F0;
+    --gold: #B8860B; --gold-light: #FFFDE7; --green: #2E7D6E;
+    --shadow: 0 2px 12px rgba(58,175,169,0.10);
+  }
+  body { font-family:-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; }
+  .header { background:var(--teal); color:white; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+  .header-title { font-size:17px; font-weight:600; }
+  .header-sub { font-size:11px; opacity:0.85; margin-top:2px; }
+  .screen { display:none; padding:16px; max-width:600px; margin:0 auto; padding-bottom:80px; }
+  .screen.active { display:block; }
+  .search-box { background:var(--white); border:1.5px solid var(--border); border-radius:12px; padding:10px 14px; width:100%; font-size:15px; color:var(--text); margin-bottom:14px; outline:none; }
+  .search-box:focus { border-color:var(--teal); }
+  .card { background:var(--white); border-radius:14px; padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0); }
+  .card-name { font-size:16px; font-weight:600; }
+  .card-meta { font-size:12px; color:var(--text-sub); margin-top:3px; }
+  .badge { font-size:10px; padding:2px 8px; border-radius:99px; font-weight:600; }
+  .badge-warn { background:var(--red-light); color:var(--red); }
+  .btn { padding:13px 20px; border-radius:12px; border:none; font-size:15px; font-weight:600; cursor:pointer; width:100%; margin-bottom:10px; touch-action:manipulation; }
+  .btn-primary { background:var(--teal); color:white; }
+  .btn-danger { background:var(--red-light); color:var(--red); }
+  .btn-secondary { background:var(--teal-light); color:var(--teal-dark); }
+  .section-title { font-size:14px; font-weight:700; margin:20px 0 10px; color:var(--teal-dark); border-left:4px solid var(--teal); padding-left:8px; }
+  .form-label { font-size:12px; font-weight:600; color:var(--text-sub); letter-spacing:0.05em; margin-bottom:6px; display:block; margin-top:12px; }
+  .form-input { background:var(--white); border:1.5px solid var(--border); border-radius:10px; padding:11px 14px; width:100%; font-size:15px; color:var(--text); outline:none; }
+  .form-input:focus { border-color:var(--teal); }
+  select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235A7070' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+  textarea.form-input { min-height:60px; resize:vertical; }
+  .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .checkbox-item { display:flex; align-items:center; gap:10px; background:var(--bg); border-radius:10px; padding:10px 12px; cursor:pointer; touch-action:manipulation; }
+  .checkbox-item.warn { background:var(--red-light); }
+  .checkbox-item input[type="checkbox"] { width:18px; height:18px; accent-color:var(--teal); flex-shrink:0; }
+  .checkbox-item.warn input[type="checkbox"] { accent-color:var(--red); }
+  .checkbox-item label { font-size:13px; cursor:pointer; }
+  .empty-state { text-align:center; padding:48px 16px; color:var(--text-sub); }
+  .empty-icon { font-size:48px; margin-bottom:12px; }
+  .fab { position:fixed; bottom:24px; right:20px; width:56px; height:56px; background:var(--teal); color:white; border-radius:50%; border:none; font-size:28px; cursor:pointer; box-shadow:0 4px 16px rgba(58,175,169,0.4); display:flex; align-items:center; justify-content:center; z-index:150; touch-action:manipulation; }
+  .back-btn { display:flex; align-items:center; gap:6px; color:var(--teal); font-size:15px; font-weight:600; cursor:pointer; background:none; border:none; margin-bottom:16px; padding:0; touch-action:manipulation; }
+  .detail-card { background:var(--white); border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .detail-row { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; gap:12px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-key { color:var(--text-sub); flex-shrink:0; }
+  .detail-val { font-weight:500; text-align:right; }
+  .warn-box { background:var(--red-light); color:var(--red); border-radius:10px; padding:12px 14px; font-size:13px; font-weight:600; margin-bottom:12px; }
+  .top-actions { display:flex; gap:8px; margin-top:24px; padding-bottom:16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">健向はうす</div>
+    <div class="header-sub">エステ初回問診シート</div>
+  </div>
+  <div id="record-count" style="font-size:13px;opacity:0.85;"></div>
+</div>
+
+<!-- 一覧 -->
+<div class="screen active" id="screen-list">
+  <input class="search-box" type="search" placeholder="🔍 名前・ふりがなで検索" oninput="searchList(this.value)">
+  <div id="record-list"></div>
+  <div class="top-actions">
+    <button onclick="backupData()" style="flex:1;background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">💾 バックアップ</button>
+    <button onclick="restoreData()" style="flex:1;background:var(--gold-light);color:var(--gold);border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">📂 復元</button>
+  </div>
+</div>
+
+<!-- 詳細 -->
+<div class="screen" id="screen-detail">
+  <button class="back-btn" onclick="goBack()">← 一覧に戻る</button>
+  <div id="detail-content"></div>
+</div>
+
+<!-- 入力フォーム -->
+<div class="screen" id="screen-form">
+  <button class="back-btn" onclick="goBack()">← 戻る</button>
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px;" id="form-title">初回問診シート</div>
+  <div style="font-size:12px;color:var(--text-sub);margin-bottom:16px;">お客様ご自身、またはスタッフが入力してください</div>
+
+  <div class="section-title">基本情報</div>
+  <label class="form-label">氏名 <span style="color:var(--red)">必須</span></label>
+  <input class="form-input" id="f-name" placeholder="例：田中 花子">
+  <label class="form-label">ふりがな</label>
+  <input class="form-input" id="f-kana" placeholder="例：たなか はなこ">
+  <label class="form-label">電話番号</label>
+  <input class="form-input" id="f-phone" type="tel" placeholder="090-XXXX-XXXX">
+  <label class="form-label">生年月日</label>
+  <input class="form-input" id="f-birth" type="date">
+
+  <div class="section-title">お肌の状態</div>
+  <label class="form-label">肌質</label>
+  <select class="form-input" id="f-skintype">
+    <option value="普通肌">普通肌</option>
+    <option value="乾燥肌">乾燥肌</option>
+    <option value="脂性肌">脂性肌</option>
+    <option value="混合肌">混合肌</option>
+    <option value="敏感肌">敏感肌</option>
+  </select>
+  <label class="form-label">お悩み（複数選択可）</label>
+  <div class="check-grid">
+    <div class="checkbox-item"><input type="checkbox" id="c-shimi"><label for="c-shimi">シミ・くすみ</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-tarumi"><label for="c-tarumi">たるみ</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-keana"><label for="c-keana">毛穴</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-nikibi"><label for="c-nikibi">ニキビ・ニキビ跡</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-kansou"><label for="c-kansou">乾燥</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-binkan"><label for="c-binkan">敏感・赤み</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-mukumi"><label for="c-mukumi">むくみ</label></div>
+    <div class="checkbox-item"><input type="checkbox" id="c-other"><label for="c-other">その他</label></div>
+  </div>
+  <label class="form-label">その他・詳しく</label>
+  <textarea class="form-input" id="f-concern-detail" placeholder="気になる部位・時期など"></textarea>
+
+  <div class="section-title">アレルギー・体質</div>
+  <label class="form-label">アレルギー（化粧品・金属・食物など）</label>
+  <textarea class="form-input" id="f-allergy" placeholder="特になし"></textarea>
+
+  <div class="section-title" style="border-left-color:var(--red);color:var(--red);">⚠️ 確認事項（機器施術の安全確認）</div>
+  <div style="font-size:12px;color:var(--text-sub);margin-bottom:8px;">プラズマ・EMS・超音波機器を使用するため、下記に当てはまる項目があれば必ずチェックしてください</div>
+  <div class="check-grid" style="grid-template-columns:1fr;">
+    <div class="checkbox-item warn"><input type="checkbox" id="w-pregnant"><label for="w-pregnant">妊娠中・妊娠の可能性がある</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-pacemaker"><label for="w-pacemaker">心臓ペースメーカー・除細動器を使用</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-metal"><label for="w-metal">体内に金属・医療機器（インプラント等）がある</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-epilepsy"><label for="w-epilepsy">てんかん・けいれんの既往がある</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-keloid"><label for="w-keloid">ケロイド体質</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-skindisease"><label for="w-skindisease">皮膚疾患で通院中</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-sunburn"><label for="w-sunburn">最近日焼け・炎症がある</label></div>
+    <div class="checkbox-item warn"><input type="checkbox" id="w-surgery"><label for="w-surgery">最近の手術・注入施術（ボトックス等）がある</label></div>
+  </div>
+  <label class="form-label">現在服用中の薬・治療中の疾患</label>
+  <textarea class="form-input" id="f-medication" placeholder="特になし"></textarea>
+
+  <div class="section-title">ご希望・目標</div>
+  <textarea class="form-input" id="f-goal" placeholder="どのようになりたいか、ご希望をお聞かせください"></textarea>
+
+  <div class="section-title">同意事項</div>
+  <div class="checkbox-item" style="margin-bottom:8px;"><input type="checkbox" id="agree-treatment"><label for="agree-treatment">施術内容・注意事項の説明を受け、同意します</label></div>
+  <div class="checkbox-item"><input type="checkbox" id="agree-photo"><label for="agree-photo">施術前後の記録用写真撮影に同意します</label></div>
+
+  <label class="form-label">スタッフメモ</label>
+  <textarea class="form-input" id="f-staffmemo" placeholder="施術者用の備考"></textarea>
+
+  <button class="btn btn-primary" onclick="saveRecord()" style="margin-top:20px;">保存する</button>
+  <button class="btn btn-secondary" onclick="goBack()">キャンセル</button>
+</div>
+
+<button class="fab" id="fab-btn" onclick="openNewForm()">＋</button>
+
+<script>
+let records = JSON.parse(localStorage.getItem('esute_records') || '[]');
+let currentId = null;
+let editingId = null;
+let pendingCustomerId = null; // CRM側から新規作成で来た場合の紐付け先顧客ID
+
+// ---- CRM（顧客管理アプリ）との連携 ----
+// 同一オリジンでlocalStorageの 'kh_customers2' を共有し、顧客データを行き来させる。
+function getCrmCustomers() {
+  try { return JSON.parse(localStorage.getItem('kh_customers2') || '[]'); }
+  catch (e) { return []; }
+}
+function saveCrmCustomers(list) {
+  localStorage.setItem('kh_customers2', JSON.stringify(list));
+}
+
+// 問診シート保存時、CRM側に対応する顧客がいなければ新規作成し、いれば紐付けだけ行う
+function linkOrCreateCrmCustomer(record) {
+  let list = getCrmCustomers();
+  let match = null;
+  if (record.customerId) match = list.find(c => c.id === record.customerId);
+  if (!match) match = list.find(c => c.name === record.name);
+  if (match) {
+    // 既存顧客がいれば電話番号・アレルギー情報が空なら補完する（上書きはしない）
+    if (!match.phone && record.phone) match.phone = record.phone;
+    if (!match.allergy && record.allergy) match.allergy = record.allergy;
+    saveCrmCustomers(list);
+    return match.id;
+  }
+  const newCustomer = {
+    id: Date.now() + Math.floor(Math.random()*1000),
+    name: record.name, kana: record.kana||'', phone: record.phone||'',
+    type: 'general', allergy: record.allergy||'',
+    joinDate: new Date().toISOString().slice(0,10), sessions: []
+  };
+  list.unshift(newCustomer);
+  saveCrmCustomers(list);
+  return newCustomer.id;
+}
+
+function applyUrlParams() {
+  const params = new URLSearchParams(location.search);
+  const viewId = params.get('id');
+  if (viewId) {
+    const rec = records.find(r => String(r.id) === String(viewId));
+    if (rec) { showDetail(rec.id); return true; }
+  }
+  if (params.get('new') === '1') {
+    pendingCustomerId = params.get('customerId') ? Number(params.get('customerId')) : null;
+    openNewForm();
+    document.getElementById('f-name').value = params.get('name') || '';
+    document.getElementById('f-kana').value = params.get('kana') || '';
+    document.getElementById('f-phone').value = params.get('phone') || '';
+    document.getElementById('f-allergy').value = params.get('allergy') || '';
+    return true;
+  }
+  return false;
+}
+
+function save() {
+  localStorage.setItem('esute_records', JSON.stringify(records));
+  updateCount();
+}
+function updateCount() { document.getElementById('record-count').textContent = `${records.length}件`; }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('fab-btn').style.display = id==='list' ? 'flex' : 'none';
+}
+function goBack() { showScreen('list'); renderList(records); }
+
+function hasWarnings(r) {
+  return r.warnings && Object.values(r.warnings).some(v=>v);
+}
+
+function renderList(list) {
+  const el = document.getElementById('record-list');
+  if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div>＋ボタンで問診シートを作成</div></div>'; updateCount(); return; }
+  el.innerHTML = [...list].sort((a,b)=>b.id-a.id).map(r => `
+    <div class="card" onclick="showDetail(${r.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="card-name">${r.name}</div>
+          <div class="card-meta">${r.kana||''} ／ ${r.date}</div>
+        </div>
+        ${hasWarnings(r)?'<span class="badge badge-warn">⚠️ 要確認</span>':''}
+      </div>
+    </div>`).join('');
+  updateCount();
+}
+
+function searchList(q) {
+  if (!q) return renderList(records);
+  renderList(records.filter(r => r.name.includes(q) || (r.kana||'').includes(q)));
+}
+
+const WARN_LABELS = {
+  pregnant: '妊娠中・妊娠の可能性', pacemaker: 'ペースメーカー使用', metal: '体内金属・医療機器',
+  epilepsy: 'てんかん・けいれんの既往', keloid: 'ケロイド体質', skindisease: '皮膚疾患で通院中',
+  sunburn: '日焼け・炎症あり', surgery: '最近の手術・注入施術'
+};
+const CONCERN_LABELS = {
+  shimi:'シミ・くすみ', tarumi:'たるみ', keana:'毛穴', nikibi:'ニキビ・ニキビ跡',
+  kansou:'乾燥', binkan:'敏感・赤み', mukumi:'むくみ', other:'その他'
+};
+
+function showDetail(id) {
+  currentId = id;
+  const r = records.find(x=>x.id===id);
+  if (!r) return;
+  showScreen('detail');
+  const concernTags = Object.keys(r.concerns||{}).filter(k=>r.concerns[k]).map(k=>CONCERN_LABELS[k]).join('、') || 'なし';
+  const warnList = Object.keys(r.warnings||{}).filter(k=>r.warnings[k]).map(k=>WARN_LABELS[k]);
+  document.getElementById('detail-content').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-size:22px;font-weight:700;">${r.name}</div>
+        <div style="font-size:13px;color:var(--text-sub);">${r.kana||''} ／ 記入日：${r.date}</div>
+      </div>
+      <button onclick="openEditForm(${r.id})" style="background:var(--teal-light);color:var(--teal-dark);border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">✏️ 編集</button>
+    </div>
+    ${warnList.length?`<div class="warn-box">⚠️ 施術前に必ず確認：${warnList.join('、')}</div>`:''}
+    <div class="detail-card">
+      <div class="detail-row"><span class="detail-key">電話番号</span><span class="detail-val">${r.phone||'未登録'}</span></div>
+      <div class="detail-row"><span class="detail-key">生年月日</span><span class="detail-val">${r.birth||'未登録'}</span></div>
+      <div class="detail-row"><span class="detail-key">肌質</span><span class="detail-val">${r.skinType||''}</span></div>
+      <div class="detail-row"><span class="detail-key">お悩み</span><span class="detail-val">${concernTags}</span></div>
+      ${r.concernDetail?`<div class="detail-row"><span class="detail-key">悩み詳細</span><span class="detail-val">${r.concernDetail}</span></div>`:''}
+      <div class="detail-row"><span class="detail-key">アレルギー</span><span class="detail-val">${r.allergy||'特になし'}</span></div>
+      <div class="detail-row"><span class="detail-key">服用薬等</span><span class="detail-val">${r.medication||'特になし'}</span></div>
+      ${r.goal?`<div class="detail-row"><span class="detail-key">ご希望</span><span class="detail-val">${r.goal}</span></div>`:''}
+      <div class="detail-row"><span class="detail-key">施術同意</span><span class="detail-val">${r.agreeTreatment?'✓ 同意済み':'未同意'}</span></div>
+      <div class="detail-row"><span class="detail-key">写真撮影同意</span><span class="detail-val">${r.agreePhoto?'✓ 同意済み':'未同意'}</span></div>
+      ${r.staffMemo?`<div class="detail-row"><span class="detail-key">スタッフメモ</span><span class="detail-val">${r.staffMemo}</span></div>`:''}
+    </div>
+    <button class="btn btn-danger" onclick="deleteRecord(${r.id})">この問診シートを削除する</button>
+    ${r.customerId?`<button class="btn btn-secondary" onclick="location.href='kenkou_crm.html'">👤 顧客管理アプリに戻る</button>`:''}
+  `;
+}
+
+function resetForm() {
+  ['f-name','f-kana','f-phone','f-birth','f-concern-detail','f-allergy','f-medication','f-goal','f-staffmemo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-skintype').value = '普通肌';
+  Object.keys(CONCERN_LABELS).forEach(k=>document.getElementById('c-'+k).checked=false);
+  Object.keys(WARN_LABELS).forEach(k=>document.getElementById('w-'+k).checked=false);
+  document.getElementById('agree-treatment').checked=false;
+  document.getElementById('agree-photo').checked=false;
+}
+
+function openNewForm() {
+  editingId = null;
+  resetForm();
+  document.getElementById('form-title').textContent = '初回問診シート';
+  showScreen('form');
+}
+
+function openEditForm(id) {
+  const r = records.find(x=>x.id===id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('form-title').textContent = '問診シートを編集';
+  document.getElementById('f-name').value = r.name||'';
+  document.getElementById('f-kana').value = r.kana||'';
+  document.getElementById('f-phone').value = r.phone||'';
+  document.getElementById('f-birth').value = r.birth||'';
+  document.getElementById('f-skintype').value = r.skinType||'普通肌';
+  Object.keys(CONCERN_LABELS).forEach(k=>document.getElementById('c-'+k).checked = !!(r.concerns&&r.concerns[k]));
+  document.getElementById('f-concern-detail').value = r.concernDetail||'';
+  document.getElementById('f-allergy').value = r.allergy||'';
+  Object.keys(WARN_LABELS).forEach(k=>document.getElementById('w-'+k).checked = !!(r.warnings&&r.warnings[k]));
+  document.getElementById('f-medication').value = r.medication||'';
+  document.getElementById('f-goal').value = r.goal||'';
+  document.getElementById('agree-treatment').checked = !!r.agreeTreatment;
+  document.getElementById('agree-photo').checked = !!r.agreePhoto;
+  document.getElementById('f-staffmemo').value = r.staffMemo||'';
+  showScreen('form');
+}
+
+function saveRecord() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('氏名を入力してください'); return; }
+  const concerns = {}; Object.keys(CONCERN_LABELS).forEach(k=>concerns[k]=document.getElementById('c-'+k).checked);
+  const warnings = {}; Object.keys(WARN_LABELS).forEach(k=>warnings[k]=document.getElementById('w-'+k).checked);
+  const data = {
+    name, kana: document.getElementById('f-kana').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    birth: document.getElementById('f-birth').value,
+    skinType: document.getElementById('f-skintype').value,
+    concerns, concernDetail: document.getElementById('f-concern-detail').value.trim(),
+    allergy: document.getElementById('f-allergy').value.trim(),
+    warnings, medication: document.getElementById('f-medication').value.trim(),
+    goal: document.getElementById('f-goal').value.trim(),
+    agreeTreatment: document.getElementById('agree-treatment').checked,
+    agreePhoto: document.getElementById('agree-photo').checked,
+    staffMemo: document.getElementById('f-staffmemo').value.trim()
+  };
+  if (editingId) {
+    const r = records.find(x=>x.id===editingId);
+    Object.assign(r, data);
+    r.customerId = linkOrCreateCrmCustomer(r);
+  } else {
+    data.id = Date.now();
+    data.date = new Date().toISOString().slice(0,10);
+    data.customerId = pendingCustomerId;
+    data.customerId = linkOrCreateCrmCustomer(data);
+    records.unshift(data);
+    pendingCustomerId = null;
+  }
+  save();
+  showScreen('list');
+  renderList(records);
+}
+
+function deleteRecord(id) {
+  const r = records.find(x=>x.id===id);
+  if (!r) return;
+  if (!confirm(`「${r.name}」の問診シートを削除しますか？`)) return;
+  records = records.filter(x=>x.id!==id);
+  save();
+  goBack();
+}
+
+// バックアップ（共有シート経由・iOS対応）
+async function backupData() {
+  const data = { records, backupDate: new Date().toLocaleString('ja-JP') };
+  const filename = 'エステ問診_バックアップ_' + new Date().toISOString().slice(0,10) + '.json';
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const file = new File([blob], filename, {type:'application/json'});
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'エステ問診バックアップ' }); return; }
+    catch (err) { if (err && err.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  alert('バックアップを保存しました！');
+}
+
+function restoreData() {
+  if (!confirm('バックアップから復元しますか？\n現在のデータは上書きされます。')) return;
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.records) records = data.records;
+        save();
+        renderList(records);
+        alert('復元完了！\nバックアップ日時：' + (data.backupDate||'不明'));
+      } catch(err) { alert('ファイルの読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+renderList(records);
+updateCount();
+applyUrlParams();
+</script>
+</body>
+</html>
