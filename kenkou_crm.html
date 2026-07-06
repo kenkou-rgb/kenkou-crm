@@ -631,6 +631,7 @@ function showDetail(id) {
       ${plan?`<div class="detail-row"><span class="detail-key">VIPプラン</span><span class="detail-val">${plan.name}</span></div>`:''}
       ${c.allergy?`<div class="detail-row"><span class="detail-key">禁忌事項</span><span class="detail-val">${c.allergy}</span></div>`:''}
     </div>
+    ${renderEsuteSection(c)}
     ${c.type==='vip'?`
     <div class="section-header">
       <div class="section-title">⭐ VIP会員状況</div>
@@ -665,6 +666,59 @@ function showDetail(id) {
         </div>`).join('')
       :'<div class="empty-state" style="padding:24px;"><div>施術履歴がありません</div></div>'}
   `;
+}
+
+// ---- エステ問診シートとの連携 ----
+// 同一オリジン（同じGitHubリポジトリ配下）で公開している esute_mondiagnosis.html と
+// localStorageのキー 'esute_records' を共有することで、CRMとエステ問診を連携させる。
+const ESUTE_WARN_LABELS = {
+  pregnant: '妊娠中・妊娠の可能性', pacemaker: 'ペースメーカー使用', metal: '体内金属・医療機器',
+  epilepsy: 'てんかん・けいれんの既往', keloid: 'ケロイド体質', skindisease: '皮膚疾患で通院中',
+  sunburn: '日焼け・炎症あり', surgery: '最近の手術・注入施術'
+};
+
+function getEsuteRecords() {
+  try { return JSON.parse(localStorage.getItem('esute_records') || '[]'); }
+  catch (e) { return []; }
+}
+
+function findEsuteRecordForCustomer(c) {
+  const list = getEsuteRecords();
+  // customerIdでの紐付けを優先、無ければ氏名一致で探す
+  return list.find(r => r.customerId === c.id) || list.find(r => r.name === c.name) || null;
+}
+
+function renderEsuteSection(c) {
+  const rec = findEsuteRecordForCustomer(c);
+  if (!rec) {
+    return `
+      <div class="detail-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;color:var(--text-sub);">📋 エステ問診シート：未作成</div>
+          <button class="section-action" onclick="goToEsute(${c.id}, true)">＋ 作成する</button>
+        </div>
+      </div>`;
+  }
+  const warnList = Object.keys(rec.warnings||{}).filter(k=>rec.warnings[k]).map(k=>ESUTE_WARN_LABELS[k]);
+  return `
+    <div class="detail-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:var(--teal-dark);">📋 エステ問診シート</div>
+        <button class="section-action" onclick="goToEsute(${c.id}, false, ${rec.id})">詳しく見る</button>
+      </div>
+      ${warnList.length?`<div class="warn-box" style="background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;margin-bottom:8px;">⚠️ ${warnList.join('、')}</div>`:''}
+      <div style="font-size:12px;color:var(--text-sub);">肌質：${rec.skinType||'未記入'}（記入日：${rec.date}）</div>
+    </div>`;
+}
+
+function goToEsute(customerId, createNew, recordId) {
+  const c = customers.find(x=>x.id===customerId);
+  if (createNew) {
+    const params = new URLSearchParams({ new: '1', customerId: customerId, name: c?c.name:'', kana: c?(c.kana||''):'', phone: c?(c.phone||''):'', allergy: c?(c.allergy||''):'' });
+    location.href = 'esute_mondiagnosis.html?' + params.toString();
+  } else {
+    location.href = 'esute_mondiagnosis.html?id=' + recordId;
+  }
 }
 
 function onFab() {
