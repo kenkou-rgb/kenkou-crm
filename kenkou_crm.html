@@ -400,6 +400,48 @@ function save() {
   updateCount();
 }
 function savePlans() { localStorage.setItem('kh_plans', JSON.stringify(plans)); }
+
+// ---- 旧データ自動検出・復元 ----
+// キー名の変更（例：kh_customers → kh_customers2）等でデータが「見えなくなっている」
+// だけの可能性があるため、端末内のlocalStorageを全スキャンして
+// 現在使っていないkh_*キーに顧客らしきデータが残っていないか確認する。
+function checkOldDataRecovery() {
+  if (customers.length > 0) return; // すでにデータがあれば何もしない
+  const knownKeys = ['kh_customers2', 'kh_incomes2', 'kh_plans'];
+  const candidates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || knownKeys.includes(key)) continue;
+    try {
+      const val = JSON.parse(localStorage.getItem(key));
+      if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+        // 顧客データらしき配列（name/idなどのフィールドを持つオブジェクトの配列）のみ候補にする
+        const sample = val[0];
+        if (sample && ('name' in sample || 'id' in sample)) {
+          candidates.push({ key, count: val.length, data: val });
+        }
+      }
+    } catch (e) { /* JSONでなければ無視 */ }
+  }
+  if (candidates.length === 0) return;
+
+  // 一番件数が多そうな候補を提示（顧客データらしきキーを優先）
+  candidates.sort((a, b) => b.count - a.count);
+  const list = candidates.map(c => `「${c.key}」に ${c.count} 件`).join('\n');
+  const target = candidates[0];
+  const doRestore = confirm(
+    `旧バージョンのデータが端末内に見つかりました：\n${list}\n\n` +
+    `最も件数の多い「${target.key}」(${target.count}件) を今のデータとして復元しますか？\n` +
+    `※復元後は通常の顧客一覧に反映されます。`
+  );
+  if (doRestore) {
+    customers = target.data;
+    save();
+    renderList(getSorted());
+    updateCount();
+    alert(`復元しました（${target.count}件）。内容を確認してください。`);
+  }
+}
 function updateCount() { document.getElementById('customer-count').textContent = `登録 ${customers.length}名`; }
 function getDayLabel(d) { return DAYS[new Date(d).getDay()]; }
 
@@ -882,15 +924,35 @@ function closeModal(id) { document.getElementById(id).classList.remove('active')
 renderList(getSorted());
 updateCount();
 renderIncome();
+checkOldDataRecovery();
 
 // バックアップ
-function backupData() {
+async function backupData() {
   const data = { customers, incomes, plans, backupDate: new Date().toLocaleString('ja-JP') };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const filename = '健向はうす_バックアップ_' + new Date().toISOString().slice(0,10) + '.json';
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], {type:'application/json'});
+  const file = new File([blob], filename, {type:'application/json'});
+
+  // iPad/iPhone（および対応ブラウザ）は共有シート経由で確実に保存できるようにする
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: '健向はうす バックアップ',
+      });
+      return; // 共有シートでキャンセルされてもエラーにしない
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // ユーザーがキャンセルしただけ
+      // 共有に失敗した場合は下のダウンロード方式にフォールバック
+    }
+  }
+
+  // PCブラウザ等、共有APIがない場合の従来方式
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '健向はうす_バックアップ_' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
   alert('バックアップを保存しました！');
