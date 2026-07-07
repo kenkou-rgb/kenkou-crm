@@ -221,6 +221,7 @@
     <label class="form-label">使用した施術</label>
     <div class="checkbox-item"><input type="checkbox" id="use-cupping"><label for="use-cupping">カッピング使用</label></div>
     <div class="checkbox-item"><input type="checkbox" id="use-ems"><label for="use-ems">EMS使用</label></div>
+    <div class="checkbox-item" style="background:var(--gold-light);"><input type="checkbox" id="use-consent"><label for="use-consent">本日の施術前にリスク説明・同意確認済み</label></div>
     <label class="form-label">金額（円）</label>
     <input class="form-input" id="session-amount" type="number" placeholder="6800">
     <label class="form-label">担当者メモ</label>
@@ -597,6 +598,7 @@ function renderToday() {
     <div style="display:flex;gap:5px;margin:4px 0;">
       ${s.cupping?'<span class="tag tag-cupping">カッピング</span>':''}
       ${s.ems?'<span class="tag tag-ems">EMS</span>':''}
+      ${s.consent?'<span class="tag" style="background:var(--gold-light);color:var(--gold);">✓ 同意確認済み</span>':''}
     </div>
     ${s.amount?`<div style="font-size:13px;font-weight:600;color:var(--green)">¥${s.amount.toLocaleString()}</div>`:''}
     ${s.memo?`<div style="font-size:12px;color:var(--text-sub)">${s.memo}</div>`:''}
@@ -661,6 +663,7 @@ function showDetail(id) {
           <div style="display:flex;gap:5px;margin:4px 0;">
             ${s.cupping?'<span class="tag tag-cupping">カッピング</span>':''}
             ${s.ems?'<span class="tag tag-ems">EMS</span>':''}
+            ${s.consent?'<span class="tag" style="background:var(--gold-light);color:var(--gold);">✓ 同意確認済み</span>':''}
           </div>
           ${s.amount?`<div style="font-size:13px;font-weight:600;color:var(--green)">¥${s.amount.toLocaleString()}</div>`:''}
           ${s.memo?`<div style="font-size:12px;color:var(--text-sub)">${s.memo}</div>`:''}
@@ -819,6 +822,7 @@ function openAddSession() {
   document.getElementById('session-menu').value = '整体60分';
   document.getElementById('use-cupping').checked = false;
   document.getElementById('use-ems').checked = false;
+  document.getElementById('use-consent').checked = false;
   document.getElementById('session-amount').value = '';
   document.getElementById('session-memo').value = '';
   openModal('modal-session');
@@ -832,6 +836,7 @@ function addSession() {
     menu: document.getElementById('session-menu').value,
     cupping: document.getElementById('use-cupping').checked,
     ems: document.getElementById('use-ems').checked,
+    consent: document.getElementById('use-consent').checked,
     amount: parseInt(document.getElementById('session-amount').value)||0,
     memo: document.getElementById('session-memo').value.trim()
   };
