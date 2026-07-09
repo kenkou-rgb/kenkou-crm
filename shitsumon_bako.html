@@ -105,6 +105,32 @@
     padding: 14px;
     margin-bottom: 16px;
   }
+  .q-meta {
+    font-size: 0.8rem;
+    color: var(--member-color);
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .replies-details {
+    margin: 8px 0;
+  }
+  .replies-details summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 4px 0;
+    list-style: none;
+  }
+  .replies-details summary::-webkit-details-marker {
+    display: none;
+  }
+  .replies-details summary::before {
+    content: "▶ ";
+    font-size: 0.7rem;
+  }
+  .replies-details[open] summary::before {
+    content: "▼ ";
+  }
   .q-text {
     font-weight: bold;
     margin-bottom: 10px;
@@ -278,11 +304,16 @@
       });
 
       const qTime = new Date(q.timestamp).toLocaleString('ja-JP', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
-      const qLabel = q.nickname ? escapeHtml(q.nickname) : '質問';
+      const qLabel = q.nickname ? escapeHtml(q.nickname) : '匿名';
+      const replyCount = replies.length;
 
       card.innerHTML = `
-        <div class="q-text">Q. ${escapeHtml(q.content)}<span class="reply-time">${qLabel}・${qTime}</span></div>
-        ${repliesHtml}
+        <div class="q-meta">${qLabel} さん <span class="reply-time">${qTime}</span></div>
+        <div class="q-text">Q. ${escapeHtml(q.content)}</div>
+        <details class="replies-details" ${replyCount <= 2 ? 'open' : ''}>
+          <summary>返信を見る(${replyCount}件)</summary>
+          ${repliesHtml || '<div class="empty" style="padding:10px 0;">まだ返信がありません</div>'}
+        </details>
         <div class="reply-form">
           <input type="text" placeholder="お名前(空欄可)" id="reply-nickname-${q.id}" style="max-width:110px;">
           <input type="text" placeholder="回答する(合言葉入力済みなら先生表示)" id="reply-input-${q.id}">
