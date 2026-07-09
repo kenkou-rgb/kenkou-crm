@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>健向はうす｜からだチェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2F3EC;
+    --paper-deep:#E7E9DE;
+    --ink:#26302A;
+    --pine:#1F3B2F;
+    --pine-soft:#3A5A48;
+    --brass:#AD8A4E;
+    --brass-soft:#D9C393;
+    --line: rgba(38,48,42,0.14);
+    --white:#FFFFFF;
+    --warn-bg:#F6EDE0;
+    --warn-ink:#7A5A22;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .bg-texture{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image: radial-gradient(circle at 15% 8%, rgba(31,59,47,0.05), transparent 40%),
+                       radial-gradient(circle at 88% 92%, rgba(173,138,78,0.08), transparent 45%);
+  }
+  .wrap{
+    position:relative;z-index:1;
+    max-width:640px;
+    margin:0 auto;
+    padding:0 20px 80px;
+  }
+  header.top{
+    padding:40px 0 28px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    margin-bottom:32px;
+  }
+  .mark{
+    display:inline-flex;
+    align-items:center;justify-content:center;
+    width:52px;height:52px;
+    border-radius:50%;
+    border:1.5px solid var(--brass);
+    color:var(--pine);
+    font-family:'Shippori Mincho', serif;
+    font-size:22px;
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:24px;
+    letter-spacing:0.06em;
+    margin:0 0 8px;
+    color:var(--pine);
+  }
+  .sub{
+    font-size:13px;
+    color:var(--pine-soft);
+    letter-spacing:0.04em;
+  }
+  .lede{
+    font-size:14px;
+    color:#4C564E;
+    margin:18px auto 0;
+    max-width:440px;
+  }
+
+  .progress{
+    display:flex;
+    gap:6px;
+    margin-bottom:30px;
+  }
+  .progress span{
+    flex:1;
+    height:3px;
+    background:var(--line);
+    border-radius:2px;
+    overflow:hidden;
+    position:relative;
+  }
+  .progress span::after{
+    content:'';
+    position:absolute;inset:0;
+    background:var(--brass);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .4s ease;
+  }
+  .progress span.done::after{transform:scaleX(1);}
+
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .step-label{
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--brass);
+    font-weight:700;
+    margin-bottom:6px;
+    display:block;
+  }
+  .step-title{
+    font-family:'Shippori Mincho', serif;
+    font-size:19px;
+    color:var(--pine);
+    margin:0 0 22px;
+  }
+
+  .field{margin-bottom:20px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:8px;
+  }
+  .field input[type=number]{
+    width:100%;
+    padding:14px 16px;
+    font-size:17px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--white);
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .field input:focus{outline:2px solid var(--brass-soft); border-color:var(--brass);}
+
+  .seg{
+    display:grid;
+    gap:8px;
+  }
+  .seg.cols-2{grid-template-columns:1fr 1fr;}
+  .seg.cols-3{grid-template-columns:repeat(3,1fr);}
+  .seg-btn{
+    padding:13px 10px;
+    text-align:center;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--white);
+    font-size:13.5px;
+    font-family:inherit;
+    color:var(--ink);
+    cursor:pointer;
+    transition:.15s;
+  }
+  .seg-btn:hover{border-color:var(--brass-soft);}
+  .seg-btn.selected{
+    background:var(--pine);
+    border-color:var(--pine);
+    color:#fff;
+    font-weight:700;
+  }
+
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:32px;
+  }
+  button.primary{
+    flex:1;
+    background:var(--pine);
+    color:#fff;
+    border:none;
+    padding:15px 20px;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    font-family:inherit;
+    cursor:pointer;
+    transition:.15s;
+  }
+  button.primary:hover{background:#16281f;}
+  button.primary:disabled{background:#B7BDB4;cursor:not-allowed;}
+  button.ghost{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--pine-soft);
+    padding:15px 18px;
+    border-radius:10px;
+    font-family:inherit;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  .hint{font-size:12px;color:#7C8579;margin-top:6px;}
+
+  /* Result */
+  #result-panel{}
+  .result-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 22px;
+    margin-bottom:18px;
+  }
+  .result-card h2{
+    font-family:'Shippori Mincho', serif;
+    font-size:17px;
+    color:var(--pine);
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .badge{
+    display:inline-block;
+    font-size:12px;
+    font-weight:700;
+    padding:4px 12px;
+    border-radius:20px;
+    letter-spacing:0.03em;
+  }
+  .badge.low{background:#E7EEE9;color:#3A5A48;}
+  .badge.normal{background:#E4EFE0;color:#2C5A33;}
+  .badge.mid{background:var(--warn-bg);color:var(--warn-ink);}
+  .badge.high{background:#F5E2DD;color:#8C4632;}
+
+  .result-body p{margin:0 0 10px;font-size:14.5px;color:#3E463F;}
+  .result-body ul{margin:8px 0 0;padding-left:20px;font-size:14.5px;color:#3E463F;}
+  .result-body li{margin-bottom:6px;}
+
+  .cta-box{
+    background:var(--pine);
+    color:#fff;
+    border-radius:16px;
+    padding:22px;
+    text-align:center;
+  }
+  .cta-box p{font-size:13.5px;opacity:0.9;margin:0 0 4px;}
+  .cta-box strong{font-family:'Shippori Mincho', serif;font-size:16px;letter-spacing:0.03em;}
+
+  .disclaimer{
+    font-size:11.5px;
+    color:#8B948C;
+    line-height:1.8;
+    margin-top:24px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+  }
+
+  .restart{
+    text-align:center;
+    margin-top:20px;
+  }
+  .restart button{
+    background:none;border:none;
+    color:var(--pine-soft);
+    font-size:13px;
+    text-decoration:underline;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  .loading-line{
+    font-size:12px;color:#9AA294;text-align:center;margin-top:14px;min-height:16px;
+  }
+</style>
+</head>
+<body>
+<div class="bg-texture"></div>
+<div class="wrap">
+
+  <header class="top">
+    <div class="mark">健</div>
+    <h1>からだチェック</h1>
+    <div class="sub">健向はうす｜岡崎</div>
+    <p class="lede">数値が分かる項目だけ入力すればOKです。体調のメモだけでも、からだの数値だけでも、両方でも大丈夫です。<br>入力した情報はこの端末に保存され、次回から推移が見られます。</p>
+  </header>
+
+  <div class="progress">
+    <span id="pg1" class="done"></span>
+    <span id="pg2"></span>
+    <span id="pg3"></span>
+  </div>
+
+  <form id="theForm" onsubmit="return false;">
+
+    <!-- STEP 1 -->
+    <div class="panel active" id="panel-1">
+      <span class="step-label">STEP 1</span>
+      <h2 class="step-title">基本のからだ情報（分かる項目だけでOK）</h2>
+
+      <div class="field">
+        <label for="nickname">ニックネーム</label>
+        <input type="text" id="nickname" maxlength="20" placeholder="例）はなこ">
+        <div class="hint">記録を追うための呼び名です。一度入力すればこの端末で覚えます</div>
+      </div>
+      <div class="field">
+        <label for="weight">体重（kg）<span style="font-weight:400;color:#8B948C;">（任意）</span></label>
+        <input type="number" id="weight" inputmode="decimal" step="0.1" min="20" max="200" placeholder="例）58.5">
+      </div>
+      <div class="field">
+        <label for="height">身長（cm）<span style="font-weight:400;color:#8B948C;">（任意）</span></label>
+        <input type="number" id="height" inputmode="decimal" step="0.1" min="100" max="220" placeholder="例）160">
+      </div>
+      <div class="field">
+        <label for="age">年齢<span style="font-weight:400;color:#8B948C;">（任意）</span></label>
+        <input type="number" id="age" inputmode="numeric" step="1" min="10" max="100" placeholder="例）45">
+      </div>
+      <div class="field">
+        <label>性別<span style="font-weight:400;color:#8B948C;">（任意）</span></label>
+        <div class="seg cols-2" id="genderSeg">
+          <div class="seg-btn" data-val="male">男性</div>
+          <div class="seg-btn" data-val="female">女性</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fatpct">体脂肪率（%）<span style="font-weight:400;color:#8B948C;">（任意）</span></label>
+        <input type="number" id="fatpct" inputmode="decimal" step="0.1" min="3" max="60" placeholder="例）24.0">
+        <div class="hint">体組成計の数値をそのまま入力してください</div>
+      </div>
+      <div class="field">
+        <label>普段の運動量<span style="font-weight:400;color:#8B948C;">（任意）</span></label>
+        <div class="seg cols-2" id="activitySeg">
+          <div class="seg-btn" data-val="sedentary">ほとんど運動しない</div>
+          <div class="seg-btn" data-val="light">軽い運動（週1〜2回）</div>
+          <div class="seg-btn" data-val="moderate">運動する（週3〜4回）</div>
+          <div class="seg-btn" data-val="active">よく運動する（週5回以上）</div>
+        </div>
+        <div class="hint">体重・身長・年齢・性別が揃った時だけ、カロリー目安の計算に使います</div>
+      </div>
+
+      <div class="nav-row">
+        <span></span>
+        <button type="button" class="primary" onclick="goStep(2)">次へ</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel" id="panel-2">
+      <span class="step-label">STEP 2</span>
+      <h2 class="step-title">歩き方チェックのための質問</h2>
+      <p class="hint" style="margin:-10px 0 20px;">当てはまるものを複数選んでOKです</p>
+
+      <div class="field">
+        <label>気になる痛みはありますか？（複数選択可）</label>
+        <div class="seg cols-3" id="painSeg">
+          <div class="seg-btn" data-val="none">特になし</div>
+          <div class="seg-btn" data-val="knee">膝</div>
+          <div class="seg-btn" data-val="sole">足裏・かかと</div>
+          <div class="seg-btn" data-val="low_back">腰</div>
+          <div class="seg-btn" data-val="hip">股関節</div>
+          <div class="seg-btn" data-val="other">その他</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>普段よく履く靴は？（複数選択可）</label>
+        <div class="seg cols-2" id="shoesSeg">
+          <div class="seg-btn" data-val="heel">ヒール中心</div>
+          <div class="seg-btn" data-val="sneaker">スニーカー中心</div>
+          <div class="seg-btn" data-val="sandal">サンダル中心</div>
+          <div class="seg-btn" data-val="business">革靴・ビジネス</div>
+          <div class="seg-btn" data-val="none_fixed">特に決めていない</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>姿勢で気になることは？（複数選択可）</label>
+        <div class="seg cols-2" id="postureSeg">
+          <div class="seg-btn" data-val="roundback">猫背</div>
+          <div class="seg-btn" data-val="swayback">反り腰</div>
+          <div class="seg-btn" data-val="bowleg">O脚</div>
+          <div class="seg-btn" data-val="knockknee">X脚</div>
+          <div class="seg-btn" data-val="none_p">特になし</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>今日の体調（複数選択可・任意）</label>
+        <div class="seg cols-2" id="symptomSeg">
+          <div class="seg-btn" data-val="headache">頭痛</div>
+          <div class="seg-btn" data-val="fatigue">だるさ・倦怠感</div>
+          <div class="seg-btn" data-val="shoulder">肩こり・首こり</div>
+          <div class="seg-btn" data-val="lowback">腰痛</div>
+          <div class="seg-btn" data-val="stomach">胃腸の不調</div>
+          <div class="seg-btn" data-val="sleep">睡眠不足</div>
+          <div class="seg-btn" data-val="appetite">食欲不振</div>
+          <div class="seg-btn" data-val="other_symptom">その他（下にメモ）</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>今日の水分補給（任意）</label>
+        <div class="seg cols-3" id="hydrationSeg">
+          <div class="seg-btn" data-val="low">少なめ</div>
+          <div class="seg-btn" data-val="normal">ふつう</div>
+          <div class="seg-btn" data-val="good">しっかり</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="conditionMemo">自由メモ（任意）</label>
+        <textarea id="conditionMemo" rows="3" maxlength="200" placeholder="例）今日はよく眠れなかった、朝から頭が重い、など" style="width:100%;padding:14px 16px;font-size:15px;border:1px solid var(--line);border-radius:10px;background:var(--white);color:var(--ink);font-family:inherit;resize:vertical;"></textarea>
+      </div>
+
+      <div class="nav-row">
+        <button type="button" class="ghost" onclick="goStep(1)">戻る</button>
+        <button type="button" class="primary" id="toResultBtn" onclick="showResult()">結果を見る</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="panel" id="panel-3">
+      <div id="result-panel"></div>
+      <div class="restart">
+        <button type="button" onclick="resetAll()">もう一度チェックする</button>
+      </div>
+      <div class="loading-line" id="loadingLine"></div>
+      <p class="disclaimer">
+        このチェックは診断ではなく、体組成計の一般的な参考範囲や、姿勢・歩行に関する一般的な知識をもとにした目安です。痛みが続く場合や体調に不安がある場合は、医療機関または当店スタッフにご相談ください。<br><br>
+        ニックネーム・身長・年齢・性別・運動量と、これまでの記録はこの端末（ブラウザ）のみに保存されます。共有の端末で使った場合は、下のリンクから削除できます。<br>
+        ニックネームは、当店が推移を確認するための記録にも使用されます（個人を特定するものではありません）。<br>
+        <a href="#" onclick="resetDeviceData(); return false;" style="color:#8B948C;">この端末の記録をすべて削除する</a>
+      </p>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+/* =========================================================
+   ここにGoogle Apps ScriptのウェブアプリURLを貼ってください
+   （未設定の間はスプレッドシートへの記録だけスキップされ、
+    お客様への結果表示は通常どおり動作します）
+   ========================================================= */
+const CONFIG = {
+  SHEET_WEBAPP_URL: "" // 例: "https://script.google.com/macros/s/xxxxx/exec"
+};
+
+const STORAGE_PROFILE_KEY = 'kenkouKarada_profile_v1';
+const STORAGE_HISTORY_KEY = 'kenkouKarada_history_v1';
+const STORAGE_CONDITION_KEY = 'kenkouTaicho_history_v1';
+const HISTORY_RETENTION_DAYS = 400; // 1年+αを常に確保できるよう日数で保持
+const state = { gender:null, activity:null, hydration:null, pain:[], shoes:[], posture:[], symptoms:[] };
+
+function loadProfile(){
+  try{
+    const raw = localStorage.getItem(STORAGE_PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveProfile(profile){
+  try{ localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(profile)); }catch(e){}
+}
+function mergeProfile(partial){
+  const existing = loadProfile() || {};
+  const merged = Object.assign({}, existing, partial);
+  saveProfile(merged);
+  return merged;
+}
+function decideNicknameFull(nicknameBase){
+  const existing = loadProfile();
+  if(existing && existing.nicknameBase === nicknameBase && existing.nicknameFull){
+    return existing.nicknameFull;
+  }
+  return nicknameBase + (Math.floor(Math.random()*90) + 10);
+}
+function pruneOldEntries(hist){
+  const cutoff = Date.now() - HISTORY_RETENTION_DAYS*24*60*60*1000;
+  return hist.filter(e => new Date(e.date).getTime() >= cutoff);
+}
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(STORAGE_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function pushHistory(entry){
+  try{
+    let hist = loadHistory();
+    hist.push(entry);
+    hist = pruneOldEntries(hist);
+    localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(hist));
+  }catch(e){}
+}
+function loadConditionHistory(){
+  try{
+    const raw = localStorage.getItem(STORAGE_CONDITION_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function pushConditionHistory(entry){
+  try{
+    let hist = loadConditionHistory();
+    hist.push(entry);
+    hist = pruneOldEntries(hist);
+    localStorage.setItem(STORAGE_CONDITION_KEY, JSON.stringify(hist));
+  }catch(e){}
+}
+function resetDeviceData(){
+  if(!confirm('この端末に保存されているプロフィールと記録をすべて削除します。よろしいですか？')) return;
+  try{
+    localStorage.removeItem(STORAGE_PROFILE_KEY);
+    localStorage.removeItem(STORAGE_HISTORY_KEY);
+    localStorage.removeItem(STORAGE_CONDITION_KEY);
+  }catch(e){}
+  location.reload();
+}
+
+function applyStoredProfile(){
+  const p = loadProfile();
+  if(!p) return;
+  if(p.nicknameBase) document.getElementById('nickname').value = p.nicknameBase;
+  if(p.height) document.getElementById('height').value = p.height;
+  if(p.age) document.getElementById('age').value = p.age;
+  if(p.gender){
+    state.gender = p.gender;
+    document.querySelectorAll('#genderSeg .seg-btn').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.val === p.gender);
+    });
+  }
+  if(p.activity){
+    state.activity = p.activity;
+    document.querySelectorAll('#activitySeg .seg-btn').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.val === p.activity);
+    });
+  }
+}
+
+function setupSeg(id, key){
+  document.querySelectorAll('#'+id+' .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#'+id+' .seg-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state[key] = btn.dataset.val;
+    });
+  });
+}
+
+function setupMultiSeg(containerId, key, exclusiveVals, targetState){
+  exclusiveVals = exclusiveVals || [];
+  targetState = targetState || state;
+  const buttons = document.querySelectorAll('#'+containerId+' .seg-btn');
+  buttons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const val = btn.dataset.val;
+      let arr = targetState[key];
+      if(arr.includes(val)){
+        arr = arr.filter(v=>v!==val);
+      } else if(exclusiveVals.includes(val)){
+        arr = [val];
+      } else {
+        arr = arr.filter(v=>!exclusiveVals.includes(v));
+        arr.push(val);
+      }
+      targetState[key] = arr;
+      buttons.forEach(b=> b.classList.toggle('selected', arr.includes(b.dataset.val)));
+    });
+  });
+}
+setupSeg('genderSeg','gender');
+setupSeg('activitySeg','activity');
+setupSeg('hydrationSeg','hydration');
+setupMultiSeg('painSeg','pain', ['none']);
+setupMultiSeg('shoesSeg','shoes', ['none_fixed']);
+setupMultiSeg('postureSeg','posture', ['none_p']);
+setupMultiSeg('symptomSeg','symptoms', []);
+applyStoredProfile();
+
+function goStep(n){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  document.getElementById('pg1').classList.toggle('done', n>=1);
+  document.getElementById('pg2').classList.toggle('done', n>=2);
+  document.getElementById('pg3').classList.toggle('done', n>=3);
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  if(n===1){
+    const w = parseFloat(document.getElementById('weight').value);
+    const a = parseFloat(document.getElementById('age').value);
+    const f = parseFloat(document.getElementById('fatpct').value);
+    if(!w || !a || !state.gender || !f){
+      // 未入力でも次に進みたい人がいるので警告のみ、ブロックはしない
+    }
+  }
+}
+
+function fatCategory(gender, fat){
+  if(gender==='male'){
+    if(fat<10) return {label:'低め', tag:'low'};
+    if(fat<20) return {label:'標準', tag:'normal'};
+    if(fat<25) return {label:'やや高め', tag:'mid'};
+    return {label:'高め', tag:'high'};
+  } else {
+    if(fat<20) return {label:'低め', tag:'low'};
+    if(fat<30) return {label:'標準', tag:'normal'};
+    if(fat<35) return {label:'やや高め', tag:'mid'};
+    return {label:'高め', tag:'high'};
+  }
+}
+
+const ACTIVITY_FACTOR = { sedentary:1.2, light:1.375, moderate:1.55, active:1.725 };
+const ACTIVITY_LABEL = { sedentary:'ほとんど運動しない', light:'軽い運動（週1〜2回）', moderate:'運動する（週3〜4回）', active:'よく運動する（週5回以上）' };
+
+function calcBMR(gender, weight, height, age){
+  const base = 10*weight + 6.25*height - 5*age;
+  return gender==='male' ? base+5 : base-161;
+}
+
+function calcCalorieAndPFC(gender, weight, height, age, activityKey){
+  const bmr = calcBMR(gender, weight, height, age);
+  const factor = ACTIVITY_FACTOR[activityKey] || ACTIVITY_FACTOR.sedentary;
+  const tdee = bmr * factor;
+
+  const floor = gender==='male' ? 1500 : 1200;
+  let dietMin = Math.round(tdee * 0.8);
+  let dietMax = Math.round(tdee * 0.9);
+  let hitFloor = false;
+  if(dietMin < floor){
+    dietMin = floor;
+    hitFloor = true;
+  }
+  if(dietMax < dietMin) dietMax = dietMin;
+
+  const target = Math.round((dietMin + dietMax) / 2);
+
+  // PFC（たんぱく質1.2〜1.6g/kg、脂質20〜30%の中央値を採用）
+  const proteinLow = Math.round(weight * 1.2);
+  const proteinHigh = Math.round(weight * 1.6);
+  const proteinMid = Math.round(weight * 1.4);
+
+  const fatLow = Math.round((target * 0.20) / 9);
+  const fatHigh = Math.round((target * 0.30) / 9);
+  const fatMid = Math.round((target * 0.25) / 9);
+
+  const carbKcal = Math.max(0, target - (proteinMid*4) - (fatMid*9));
+  const carbG = Math.round(carbKcal / 4);
+
+  return {
+    bmr: Math.round(bmr), tdee: Math.round(tdee),
+    dietMin, dietMax, target, hitFloor,
+    proteinLow, proteinHigh, proteinMid,
+    fatLow, fatHigh, fatMid,
+    carbG
+  };
+}
+
+function bodyAdvice(cat, gender){
+  const map = {
+    low: [
+      '引き締まった状態を保てています。今の運動量・食事量を大きく変える必要はなさそうです。',
+      '体脂肪が低めの場合、筋肉量や柔軟性の維持が快適さのポイントになります。可動域を保つケアがおすすめです。'
+    ],
+    normal: [
+      '体脂肪率は標準的な範囲です。今の生活リズムを維持しつつ、姿勢や歩き方など「使い方」の質を上げていくと変化が出やすい段階です。'
+    ],
+    mid: [
+      '標準の範囲よりやや高めです。急な食事制限よりも、活動量を少しずつ増やす・睡眠を整えるなど、無理のない見直しから始めるのが安全です。',
+      '体を動かす習慣づくりのサポートとして、整体やパーソナルトレーニングでからだの使い方を確認するのも一つの方法です。'
+    ],
+    high: [
+      '参考範囲より高めの数値です。ご自身の判断だけで極端な食事制限を行うのはおすすめしません。まずは生活習慣全体を専門家と一緒に確認することをおすすめします。'
+    ]
+  };
+  return map[cat] || [];
+}
+
+function walkingAdvice(painArr, shoesArr, postureArr){
+  const lines = [];
+  painArr = painArr || [];
+  shoesArr = shoesArr || [];
+  postureArr = postureArr || [];
+
+  // 「小指体重」グループ（膝・足裏・股関節の痛み／O脚・X脚）は
+  // 当店独自の一貫した見立てがあるため、重複を避けて1本にまとめる
+  const OUTER_WEIGHT_PAIN = ['knee', 'sole', 'hip'];
+  const OUTER_WEIGHT_POSTURE = ['bowleg', 'knockknee'];
+  const outerTriggered =
+    painArr.some(p => OUTER_WEIGHT_PAIN.includes(p)) ||
+    postureArr.some(p => OUTER_WEIGHT_POSTURE.includes(p));
+
+  if(outerTriggered){
+    lines.push(
+      '当店の見立てでは、膝・足裏・股関節の負担の多くは「小指体重」（足の外側に体重が逃げること）が関係しています。O脚の場合は膝が外に開き、そのまま外側荷重になる分かりやすいパターンです。X脚の場合は一見逆に見えますが、親指が内側に入り込みすぎることで、かえって小指側に体重が逃げてしまい、それがさらに脚を内側に引き込む悪循環につながっているケースがあります。膝や足首で吸収しきれなかった負担を、最終的に股関節が「逃げ場」として引き受けていることも少なくありません。親指側で地面を押し出す意識を持つだけでも変化が出ることがありますが、癖を変えるには時間がかかるため、当店で実際の重心を見ながら調整するのが確実です。'
+    );
+  }
+
+  const painShort = {
+    knee: '膝：外側荷重（小指体重）の影響を特に受けやすい部位です。親指側でしっかり地面を押す意識を持つと良いでしょう。',
+    sole: '足裏・かかと：外側に体重が流れているサインの一つです。足指をグーパーと動かすなど、足裏の筋肉を使う運動を取り入れると良いでしょう。',
+    hip: '股関節：膝・足首でさばき切れない負担の逃げ場になっている可能性があります。まずは膝・足首側のケアを優先すると良いでしょう。'
+  };
+  const painFull = {
+    low_back: '腰の張りが気になる場合、骨盤の傾きや反り腰が歩行時の負担につながっていることがあります。骨盤を軽く立てる意識で座る・立つようにすると良いでしょう。',
+    other: 'その他の痛みについては、部位によって原因が大きく異なるため、一度直接見せていただくのが確実です。'
+  };
+  painArr.forEach(p=>{
+    if(outerTriggered && painShort[p]) lines.push(painShort[p]);
+    else if(painFull[p]) lines.push(painFull[p]);
+  });
+
+  const shoesMap = {
+    heel: 'ヒールを履く時間が長いと、ふくらはぎが縮こまりやすく、それが姿勢や歩き方全体に影響することがあります。日常でストレッチの時間を意識的に作ると良いでしょう。',
+    sandal: 'サンダルは足指を使わずに歩きやすい履物なので、足指や足裏の筋肉が使われにくくなることがあります。足指でサンダルを挟むように意識して歩くと良いでしょう。',
+    business: '革靴は足先が狭くなりやすく、指の動きが制限されることで歩行バランスに影響することがあります。帰宅後に足指を開く・回すなど軽くほぐす習慣をつけると良いでしょう。'
+  };
+  shoesArr.forEach(s=>{ if(shoesMap[s]) lines.push(shoesMap[s]); });
+
+  const postureShort = {
+    bowleg: 'O脚：外側重心が膝の開きとして表れているパターンです。内もも（内転筋）を意識して使う運動を取り入れると良いでしょう。',
+    knockknee: 'X脚：親指が内側に入り込むことで、逆に小指側へ体重が逃げている可能性があります。足指を広げる意識や、足指じゃんけんのような運動を取り入れると良いでしょう。'
+  };
+  const postureFull = {
+    roundback: '猫背があると、重心が前に流れやすく、歩幅が小さく・歩行時の推進力が出にくくなる傾向があります。目線を少し上げて歩く意識を持つと整いやすくなります。',
+    swayback: '反り腰の傾向があると、腰周りの筋肉に常に負担がかかった状態で歩いていることが多いです。お尻に力を入れて歩く意識を持つと、負担が和らぎやすくなります。'
+  };
+  postureArr.forEach(p=>{
+    if(outerTriggered && postureShort[p]) lines.push(postureShort[p]);
+    else if(postureFull[p]) lines.push(postureFull[p]);
+  });
+
+  if(lines.length===0){
+    lines.push('現時点で大きな気になる点は挙げられていません。日常の歩き方は、思っている以上に姿勢のクセの影響を受けています。一度専門家の目で確認してみると新しい発見があるかもしれません。');
+  }
+
+  return lines;
+}
+
+function formatDate(iso){
+  const d = new Date(iso);
+  return (d.getMonth()+1)+'/'+d.getDate();
+}
+
+function daysBetween(isoA, isoB){
+  const ms = new Date(isoB) - new Date(isoA);
+  return Math.max(1, ms / (1000*60*60*24));
+}
+
+function trendAdvice(prevEntry, current){
+  if(!prevEntry) return [];
+
+  const days = daysBetween(prevEntry.date, current.date);
+  const weightDelta = current.weight - prevEntry.weight;
+  const fatDelta = current.fatpct - prevEntry.fatpct;
+  const weeklyRate = weightDelta / (days / 7); // kg/週（マイナスが減少方向）
+  const safeWeeklyLimit = current.weight * 0.01; // 一般的な目安：体重の1%/週程度まで
+
+  const lines = [];
+
+  if(Math.abs(weightDelta) < 0.3 && Math.abs(fatDelta) < 0.3){
+    lines.push('前回から大きな変化はなく、安定して推移しています。今のペースを維持していきましょう。');
+  } else if(weeklyRate <= -safeWeeklyLimit){
+    lines.push('減少のペースがやや速めです。急激な変化は体調に負担がかかることがあるため、無理のないペースを意識し、体調に変化があれば専門家にご相談ください。');
+  } else if(weightDelta < 0){
+    lines.push('緩やかに減少方向で推移しています。無理のないペースなので、このまま続けていきましょう。');
+  } else if(weightDelta > 0){
+    lines.push('前回より増加していますが、一時的な変動であることも多いです。数値の上下だけで一喜一憂せず、生活習慣全体の流れで見ていくのがおすすめです。');
+  }
+
+  return lines;
+}
+
+function buildLineChartSvg(entries, key, color, label){
+  if(entries.length < 2){
+    return '<p style="font-size:13px;color:#8B948C;">グラフ表示には、あと数回分の記録が必要です。</p>';
+  }
+  const values = entries.map(e=>e[key]);
+  const minV = Math.min.apply(null, values);
+  const maxV = Math.max.apply(null, values);
+  const range = (maxV - minV) || 1;
+  const w = 280, h = 100, pad = 12;
+  const stepX = entries.length > 1 ? (w - pad*2) / (entries.length - 1) : 0;
+
+  const pts = entries.map((e,i)=>{
+    const x = pad + i*stepX;
+    const y = pad + (1 - (e[key] - minV)/range) * (h - pad*2);
+    return {x:x.toFixed(1), y:y.toFixed(1)};
+  });
+  const polyline = pts.map(p=>`${p.x},${p.y}`).join(' ');
+  const circles = pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${color}"/>`).join('');
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;margin-top:8px;display:block;">
+      <polyline points="${polyline}" fill="none" stroke="#1F3B2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${circles}
+    </svg>
+    <div class="hint" style="text-align:center;">${label}の推移（折れ線）</div>
+  `;
+}
+
+function buildYearViewHtml(fullHistory){
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - 365*24*60*60*1000);
+  const entries = fullHistory
+    .filter(e => new Date(e.date) >= cutoff)
+    .sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+  if(entries.length === 0){
+    return '<p style="font-size:13px;color:#8B948C;">この期間の記録はまだありません。</p>';
+  }
+
+  const first = entries[0];
+  const last = entries[entries.length-1];
+  const wDelta = last.weight - first.weight;
+  const fDelta = last.fatpct - first.fatpct;
+  const wSign = wDelta >= 0 ? '+' : '';
+  const fSign = fDelta >= 0 ? '+' : '';
+
+  const weightChart = buildLineChartSvg(entries, 'weight', '#AD8A4E', '体重');
+  const fatChart = buildLineChartSvg(entries, 'fatpct', '#3A5A48', '体脂肪率');
+  const listRows = entries.slice().reverse()
+    .map(e => `<li>${formatDate(e.date)}：体重 ${e.weight}kg　／　体脂肪率 ${e.fatpct}%</li>`)
+    .join('');
+
+  return `
+    <p style="font-size:13px;">${formatDate(first.date)}〜${formatDate(last.date)}（${entries.length}件）：体重 ${wSign}${wDelta.toFixed(1)}kg　／　体脂肪率 ${fSign}${fDelta.toFixed(1)}%</p>
+    ${weightChart}
+    ${fatChart}
+    <ul style="margin-top:10px;">${listRows}</ul>
+  `;
+}
+
+function toggleYearView(){
+  const el = document.getElementById('yearView');
+  const btn = document.getElementById('yearViewBtn');
+  if(el.style.display === 'none' || !el.style.display){
+    el.innerHTML = buildYearViewHtml(window.__fullHistoryForYearView || []);
+    el.style.display = 'block';
+    if(btn) btn.textContent = '閉じる';
+  } else {
+    el.style.display = 'none';
+    if(btn) btn.textContent = '過去1年分をまとめて見る';
+  }
+}
+
+function copyHistoryText(){
+  const history = window.__fullHistoryForYearView || [];
+  if(history.length === 0){
+    alert('コピーできる記録がまだありません。');
+    return;
+  }
+  const sorted = history.slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+  const lines = sorted.map(e => `${formatDate(e.date)}　体重${e.weight}kg／体脂肪率${e.fatpct}%`);
+  const text = '【健向はうす からだチェック 記録】\n' + lines.join('\n');
+
+  const btn = document.getElementById('copyHistoryBtn');
+  const done = (ok)=>{
+    if(btn) btn.textContent = ok ? 'コピーしました' : 'コピーできませんでした';
+    setTimeout(()=>{ if(btn) btn.textContent = 'この記録をコピーする（バックアップ用）'; }, 2000);
+  };
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>done(true)).catch(()=>done(false));
+  } else {
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      done(true);
+    }catch(e){ done(false); }
+  }
+}
+
+function buildTrendHtml(prevEntry, current, historyForList, adviceLines){
+  let deltaHtml = '';
+  if(prevEntry){
+    const wd = current.weight - prevEntry.weight;
+    const fd = current.fatpct - prevEntry.fatpct;
+    const wSign = wd > 0 ? '+' : '';
+    const fSign = fd > 0 ? '+' : '';
+    deltaHtml = `<p>前回（${formatDate(prevEntry.date)}）比：体重 ${wSign}${wd.toFixed(1)}kg　／　体脂肪率 ${fSign}${fd.toFixed(1)}%</p>`;
+  } else {
+    deltaHtml = `<p>これが最初の記録です。次回チェックする時から、前回との比較が表示されます。</p>`;
+  }
+  const rows = historyForList.slice(-5).reverse()
+    .map(e => `<li>${formatDate(e.date)}：体重 ${e.weight}kg　／　体脂肪率 ${e.fatpct}%</li>`)
+    .join('');
+  const adviceHtml = (adviceLines && adviceLines.length)
+    ? adviceLines.map(t=>`<p>${t}</p>`).join('')
+    : '';
+  return `
+    <div class="result-card">
+      <h2>推移</h2>
+      <div class="result-body">
+        ${deltaHtml}
+        ${adviceHtml}
+        <ul>${rows}</ul>
+        <button type="button" class="ghost" id="yearViewBtn" style="width:100%;margin-top:14px;" onclick="toggleYearView()">過去1年分をまとめて見る</button>
+        <button type="button" class="ghost" id="copyHistoryBtn" style="width:100%;margin-top:8px;" onclick="copyHistoryText()">この記録をコピーする（バックアップ用）</button>
+        <div id="yearView" style="display:none;margin-top:14px;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function showResult(){
+  const nicknameBase = document.getElementById('nickname').value.trim();
+  const w = parseFloat(document.getElementById('weight').value);
+  const h = parseFloat(document.getElementById('height').value);
+  const a = parseFloat(document.getElementById('age').value);
+  const f = parseFloat(document.getElementById('fatpct').value);
+  const gender = state.gender;
+  const activity = state.activity;
+  const memo = document.getElementById('conditionMemo').value.trim();
+  const symptoms = state.symptoms.slice();
+  const hydration = state.hydration;
+
+  if(!nicknameBase){
+    alert('ニックネームを入力してください。');
+    goStep(1);
+    return;
+  }
+
+  const hasBodyData = !!(w && h && a && f && gender && activity);
+  const hasWalkingAnswers = (state.pain.length>0 || state.shoes.length>0 || state.posture.length>0);
+  const hasConditionData = (symptoms.length>0 || !!memo || !!hydration);
+
+  if(!hasBodyData && !hasWalkingAnswers && !hasConditionData){
+    alert('からだの数値・歩き方の質問・体調メモのうち、どれか1つは入力してください。');
+    return;
+  }
+
+  const nicknameFull = decideNicknameFull(nicknameBase);
+  mergeProfile(Object.assign(
+    { nicknameBase:nicknameBase, nicknameFull:nicknameFull },
+    hasBodyData ? { height:h, age:a, gender:gender, activity:activity } : {}
+  ));
+
+  const htmlParts = [];
+  htmlParts.push(`<p style="font-size:12px;color:#8B948C;margin:0 0 14px;">記録名：${nicknameFull}</p>`);
+
+  if(hasBodyData){
+    const cat = fatCategory(gender, f);
+    const bAdvice = bodyAdvice(cat.tag, gender);
+    const cal = calcCalorieAndPFC(gender, w, h, a, activity);
+
+    const prevHistory = loadHistory();
+    const prevEntry = prevHistory.length ? prevHistory[prevHistory.length-1] : null;
+    const currentEntry = { date: new Date().toISOString(), weight:w, fatpct:f, fatCategory:cat.label };
+    window.__fullHistoryForYearView = prevHistory.concat([currentEntry]);
+    const trendHtml = buildTrendHtml(prevEntry, currentEntry, prevHistory.concat([currentEntry]), trendAdvice(prevEntry, currentEntry));
+
+    const floorNote = cal.hitFloor
+      ? `<p style="color:#8C4632;">計算上の目安が下限（${gender==='male'?'1,500':'1,200'}kcal）を下回ったため、下限値で表示しています。これ以上の食事制限はご自身の判断で行わず、専門家にご相談ください。</p>`
+      : '';
+
+    htmlParts.push(`
+      <div class="result-card">
+        <h2>体脂肪率の目安 <span class="badge ${cat.tag}">${cat.label}</span></h2>
+        <div class="result-body">
+          ${bAdvice.map(t=>`<p>${t}</p>`).join('')}
+        </div>
+      </div>
+
+      ${trendHtml}
+
+      <div class="result-card">
+        <h2>カロリー・PFCの目安</h2>
+        <div class="result-body">
+          <p>基礎代謝（BMR）：約 ${cal.bmr} kcal　／　消費カロリー目安（TDEE）：約 ${cal.tdee} kcal</p>
+          <p>減量を意識する場合の摂取カロリー目安：<strong>${cal.dietMin}〜${cal.dietMax} kcal</strong></p>
+          ${floorNote}
+          <ul>
+            <li>たんぱく質：${cal.proteinLow}〜${cal.proteinHigh} g（目安 ${cal.proteinMid} g）</li>
+            <li>脂質：${cal.fatLow}〜${cal.fatHigh} g（目安 ${cal.fatMid} g）</li>
+            <li>炭水化物：残りのカロリーから　目安 ${cal.carbG} g</li>
+          </ul>
+          <p style="font-size:12px;color:#8B948C;margin-top:10px;">一般的な計算式（Mifflin-St Jeor式）と栄養学のガイドラインをもとにした目安です。持病がある方・妊娠中の方などは、必ず医療機関にご相談の上ご利用ください。</p>
+        </div>
+      </div>
+    `);
+
+    pushHistory(currentEntry);
+
+    sendToSheet({
+      type:'body',
+      nickname:nicknameFull,
+      weight:w, height:h, age:a, gender: gender==='male'?'男性':'女性',
+      fatpct:f, fatCategory:cat.label,
+      activity: ACTIVITY_LABEL[activity],
+      bmr: cal.bmr, tdee: cal.tdee,
+      dietMin: cal.dietMin, dietMax: cal.dietMax,
+      proteinMid: cal.proteinMid, fatMid: cal.fatMid, carbG: cal.carbG,
+      pain: labelOfMulti('painSeg', state.pain),
+      shoes: labelOfMulti('shoesSeg', state.shoes),
+      posture: labelOfMulti('postureSeg', state.posture)
+    });
+  }
+
+  if(hasWalkingAnswers){
+    const wAdvice = walkingAdvice(state.pain, state.shoes, state.posture);
+    htmlParts.push(`
+      <div class="result-card">
+        <h2>歩き方のポイント</h2>
+        <div class="result-body">
+          <ul>
+            ${wAdvice.map(t=>`<li>${t}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `);
+  }
+
+  if(hasConditionData){
+    const hydrationLabelMap = { low:'少なめ', normal:'ふつう', good:'しっかり' };
+    const hydrationLabel = hydrationLabelMap[hydration] || '';
+
+    const entry = { date: new Date().toISOString(), symptoms: symptomLabels(symptoms), memo: memo, hydration: hydrationLabel };
+    pushConditionHistory(entry);
+
+    sendToSheet({
+      type:'condition',
+      nickname:nicknameFull,
+      symptoms: entry.symptoms,
+      memo: entry.memo,
+      hydration: entry.hydration
+    });
+
+    const hydrationAdvice = hydration === 'low'
+      ? '水分補給が少なめのようです。こまめに白湯や常温の水を摂るよう意識してみてください。'
+      : (hydration === 'good' ? '水分補給、しっかりできていますね。その調子で続けましょう。' : '');
+
+    const recent = loadConditionHistory().slice(-5).reverse();
+    const rows = recent.map(e=>{
+      const parts = [];
+      if(e.hydration) parts.push('水分：'+e.hydration);
+      if(e.symptoms) parts.push(e.symptoms);
+      if(e.memo) parts.push(e.memo);
+      return `<li>${formatDate(e.date)}：${parts.join('／') || '（記録のみ）'}</li>`;
+    }).join('');
+
+    htmlParts.push(`
+      <div class="result-card">
+        <h2>今日の体調メモ</h2>
+        <div class="result-body">
+          <p>記録しました。気になる症状が続く場合は、当店スタッフか医療機関にご相談ください。</p>
+          ${hydrationAdvice ? `<p>${hydrationAdvice}</p>` : ''}
+          <ul>${rows}</ul>
+        </div>
+      </div>
+    `);
+  }
+
+  htmlParts.push(`
+    <div class="cta-box">
+      <p>数値だけでは分からない「からだのクセ」は</p>
+      <strong>頭蓋活性姿勢整体・パーソナルトレーニング</strong>
+      <p style="margin-top:10px;">で、実際に見ながら確認できます。お気軽にご相談ください。</p>
+      <div style="margin-top:14px;padding:12px 16px;border:2px solid var(--brass-soft);border-radius:10px;background:rgba(217,195,147,0.15);">
+        <p style="font-size:20px;font-weight:700;margin:0;">ネットでのご質問は<a href="shitsumon_bako.html" style="color:#fff;text-decoration:underline;">こちらから</a>どうぞ。</p>
+      </div>
+    </div>
+  `);
+
+  document.getElementById('result-panel').innerHTML = htmlParts.join('\n');
+  goStep(3);
+}
+
+function labelOfMulti(segId, arr){
+  if(!arr || arr.length===0) return '';
+  return arr.map(val=>{
+    const el = document.querySelector('#'+segId+' .seg-btn[data-val="'+val+'"]');
+    return el ? el.textContent : val;
+  }).join('、');
+}
+
+function sendToSheet(payload){
+  const loadEl = document.getElementById('loadingLine');
+  if(!CONFIG.SHEET_WEBAPP_URL){
+    return; // 未設定なら何もしない（画面表示には影響なし）
+  }
+  try{
+    fetch(CONFIG.SHEET_WEBAPP_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(payload)
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+function resetAll(){
+  document.getElementById('weight').value='';
+  document.getElementById('fatpct').value='';
+  document.getElementById('conditionMemo').value='';
+  state.pain=[]; state.shoes=[]; state.posture=[]; state.symptoms=[]; state.hydration=null;
+  document.querySelectorAll('#painSeg .seg-btn, #shoesSeg .seg-btn, #postureSeg .seg-btn, #symptomSeg .seg-btn, #hydrationSeg .seg-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('result-panel').innerHTML='';
+  applyStoredProfile();
+  goStep(1);
+}
+
+function symptomLabels(arr){
+  if(!arr || arr.length===0) return '';
+  return arr.map(val=>{
+    const el = document.querySelector('#symptomSeg .seg-btn[data-val="'+val+'"]');
+    return el ? el.textContent : val;
+  }).join('、');
+}
+</script>
+</body>
+</html>
